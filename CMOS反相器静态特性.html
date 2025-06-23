@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMOS反相器静态特性</title>
+    <!-- MathJax Configuration -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        svg: {
+          fontCache: 'global'
+        }
+      };
+    </script>
+    <!-- MathJax Script -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 25px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        h1, h2, h3 {
+            color: #0056b3;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+            margin-top: 1.5em;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.2em;
+            color: #003d7c;
+        }
+        .formula {
+            display: block;
+            padding: 15px;
+            margin: 20px 0;
+            background-color: #e9f5ff;
+            border-left: 5px solid #007bff;
+            overflow-x: auto;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        .highlight {
+            color: #d9534f;
+            font-weight: bold;
+        }
+        .key-point {
+            background-color: #fffbe6;
+            padding: 15px;
+            border: 1px solid #ffe58f;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .example-problem {
+            background-color: #f0f9f0;
+            padding: 20px;
+            border: 1px solid #cce8cc;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .example-problem h3 {
+            color: #155724;
+            border-bottom-color: #b8dbc0;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CMOS反相器静态特性</h1>
+        <p>本文档总结了CMOS反相器的基本工作原理、电压传输特性、关键参数计算以及噪声容限等核心概念。</p>
+
+        <h2>一、CMOS反相器基本结构与工作原理</h2>
+        <p>CMOS（Complementary MOS）反相器由一个PMOS晶体管和一个NMOS晶体管互补连接而成。 这种结构是当前数字集成电路的主流设计。</p>
+
+        <div class="key-point">
+            <h4>核心工作原理</h4>
+            <p>CMOS反相器利用PMOS和NMOS晶体管的互补特性，使其在稳定状态下总有一个晶体管处于<span class="highlight">截止</span>状态。</p>
+            <ul>
+                <li>当输入电压 $V_{in}$ 为高电平（例如 $V_{DD}$）时：NMOS管导通，PMOS管截止，输出 $V_{out}$ 被拉到低电平（GND, 0V）。</li>
+                <li>当输入电压 $V_{in}$ 为低电平（例如 0V）时：PMOS管导通，NMOS管截止，输出 $V_{out}$ 被拉到高电平（$V_{DD}$）。</li>
+            </ul>
+            <p><strong><span class="highlight">最重要的特点：</span></strong>由于在静态（输入稳定）时，PMOS和NMOS只有一个导通，两者之间不存在直流通路，因此<span class="highlight">静态功耗几乎为0</span>。这是CMOS电路得以广泛应用的最大优势之一。</p>
+        </div>
+
+        <h2>二、电压传输特性 (VTC) 及工作区分析</h2>
+        <p>电压传输特性（VTC）曲线描述了输出电压 $V_{out}$ 如何随输入电压 $V_{in}$ 的变化而变化。通过分析VTC曲线，我们可以了解反相器的各项静态性能指标。</p>
+        <p>随着输入电压 $V_{in}$ 从0V扫描到 $V_{DD}$，NMOS和PMOS晶体管会经历不同的工作状态（截止区、线性区、饱和区）。整个过程可以分为五个区域。</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>区域</th>
+                    <th>输入电压 $V_{in}$ 条件</th>
+                    <th>NMOS状态</th>
+                    <th>PMOS状态</th>
+                    <th>输出电压 $V_{out}$</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>(1)</td>
+                    <td>$0 \le V_{in} < V_{TN}$</td>
+                    <td><span class="highlight">截止</span></td>
+                    <td>线性</td>
+                    <td>$V_{DD}$</td>
+                </tr>
+                <tr>
+                    <td>(2)</td>
+                    <td>$V_{TN} \le V_{in} < V_{it}$</td>
+                    <td>饱和</td>
+                    <td>线性</td>
+                    <td>$V_{out}$ 开始下降</td>
+                </tr>
+                <tr>
+                    <td>(3)</td>
+                    <td>$V_{in} = V_{it}$ (逻辑阈值)</td>
+                    <td><span class="highlight">饱和</span></td>
+                    <td><span class="highlight">饱和</span></td>
+                    <td>$V_{out}$ 急剧变化</td>
+                </tr>
+                <tr>
+                    <td>(4)</td>
+                    <td>$V_{it} < V_{in} \le V_{DD} + V_{TP}$</td>
+                    <td>线性</td>
+                    <td>饱和</td>
+                    <td>$V_{out}$ 继续下降</td>
+                </tr>
+                <tr>
+                    <td>(5)</td>
+                    <td>$V_{in} > V_{DD} + V_{TP}$</td>
+                    <td>线性</td>
+                    <td><span class="highlight">截止</span></td>
+                    <td>$0V$</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>三、关键静态参数计算</h2>
+        <p>为了精确评估反相器的性能，需要计算几个关键的电压参数，包括逻辑阈值、输入高/低电平和噪声容限。</p>
+        
+        <h3>1. 逻辑阈值 ($V_{it}$)</h3>
+        <p>逻辑阈值定义为输入电压等于输出电压 ($V_{in} = V_{out}$) 的点。此时，NMOS和PMOS管都工作在<span class="highlight">饱和区</span>。</p>
+        <div class="formula">
+        $$ V_{it} = \frac{V_{DD} + V_{TP} + V_{TN}\sqrt{K_{R}}}{1 + \sqrt{K_{R}}} $$
+        </div>
+        <p>其中，$K_R = K_N / K_P = \frac{\mu_n C_{ox} (W/L)_n}{\mu_p C_{ox} (W/L)_p}$。对于完全对称的CMOS反相器（即 $|V_{TP}| = V_{TN}$ 且 $K_R = 1$），逻辑阈值为：</p>
+        <div class="formula">
+        $$ V_{it} = \frac{1}{2}V_{DD} $$
+        </div>
+
+        <h3>2. 输入低电平 ($V_{IL}$) 和输入高电平 ($V_{IH}$)</h3>
+        <p>$V_{IL}$ 和 $V_{IH}$ 是在电压传输特性曲线上增益为-1（即 $\frac{dV_{out}}{dV_{in}} = -1$）的两个点。</p>
+        <ul>
+            <li><strong>$V_{IL}$ 计算:</strong> 此时NMOS工作在<span class="highlight">饱和区</span>，PMOS工作在<span class="highlight">线性区</span>。通过联立求解电流方程及其导数可以得到。</li>
+            <li><strong>$V_{IH}$ 计算:</strong> 此时NMOS工作在<span class="highlight">线性区</span>，PMOS工作在<span class="highlight">饱和区</span>。求解方法与 $V_{IL}$ 类似。</li>
+        </ul>
+
+        <h2>四、噪声容限 (Noise Margin)</h2>
+        <p>噪声容限是衡量电路抵抗噪声干扰能力的重要指标。它表示在保证输出不发生错误翻转的情况下，输入端能容忍的最大噪声电压。</p>
+        
+        <ul>
+            <li><strong>低电平噪声容限 ($V_{NML}$):</strong> 指输入为低电平时，允许叠加的最大正向噪声。
+                <div class="formula">
+                $$ V_{NML} = V_{IL} - V_{OL} $$
+                </div>
+            </li>
+            <li><strong>高电平噪声容限 ($V_{NMH}$):</strong> 指输入为高电平时，允许叠加的最大负向噪声。
+                 <div class="formula">
+                $$ V_{NMH} = V_{OH} - V_{IH} $$
+                </div>
+            </li>
+        </ul>
+        <div class="key-point">
+            <h4>最大噪声容限</h4>
+            <p>当反相器对称设计，使得 $V_{it} = \frac{1}{2}V_{DD}$ 时，高低电平的噪声容限相等且达到最大值，此时电路的抗干扰能力最强。</p>
+            <p>最大噪声容限可以通过逻辑阈值来估算：</p>
+             <div class="formula">
+             $$ V_{NLM} = V_{it} - V_{OL} = V_{it} $$ <br>
+             $$ V_{NHM} = V_{OH} - V_{it} = V_{DD} - V_{it} $$
+             </div>
+        </div>
+
+        <h2>五、例题讲解</h2>
+        <div class="example-problem">
+            <h3>例题1：计算由单位增益点确定的噪声容限</h3>
+            <p><strong>问题：</strong>考虑一个CMOS反相器，参数如下：$V_{DD}=3.3V$, $V_{Tn}=0.6V$, $V_{Tp}=-0.7V$, $K_{n}=100\mu A/V^{2}$, $K_{p}=40\mu A/V^{2}$。计算其由单位增益点确定的噪声容限。</p>
+            
+            <h4>1. 求解 $V_{IL}$</h4>
+            <p>首先，计算参数比 $K_R = K_n / K_p = 100 / 40 = 2.5$。
+            在 $V_{IN}=V_{IL}$ 点，NMOS饱和，PMOS线性。联立求解以下两个方程：</p>
+            <p><strong>方程1（电流相等）：</strong></p>
+            <div class="formula">
+            $$ K_{P}[2(V_{in}-V_{DD}-V_{TP})(V_{out}-V_{DD})-(V_{out}-V_{DD})^{2}] = K_{N}(V_{in}-V_{TN})^{2} $$
+            </div>
+            <p><strong>方程2（增益为-1时的关系式）：</strong></p>
+            <div class="formula">
+            $$ V_{IL} = \frac{2V_{out} + V_{TP} - V_{DD} + K_{R}V_{TN}}{1+K_{R}} $$
+            </div>
+            <p>将数值代入方程2：</p>
+            <div class="formula">
+            $$ V_{IL} = \frac{2V_{out} - 0.7 - 3.3 + 2.5 \times 0.6}{1+2.5} = \frac{2V_{out} - 2.5}{3.5} \approx 0.57V_{out} - 0.71 $$
+            </div>
+            <p>将 $V_{IL}$ 的表达式代入电流方程，经过化简得到关于 $V_{out}$ 的二次方程：</p>
+            <div class="formula">
+            $$ 0.66V_{out}^2 + 0.05V_{out} - 6.65 = 0 $$
+            </div>
+            <p>解得合理根为 $V_{out} = 3.14V$。将其代回 $V_{IL}$ 表达式：</p>
+            <div class="formula">
+            $$ V_{IL} = 0.57 \times 3.14 - 0.71 = \mathbf{1.08V} $$
+            </div>
+            
+            <h4>2. 求解 $V_{IH}$</h4>
+            <p>在 $V_{IN}=V_{IH}$ 点，NMOS线性，PMOS饱和。使用的方程为：</p>
+            <p><strong>方程1（电流相等）：</strong></p>
+            <div class="formula">
+            $$ K_{N}[2(V_{in}-V_{TN})V_{out} - V_{out}^2] = K_{P}(V_{in}-V_{DD}-V_{TP})^{2} $$
+            </div>
+            <p><strong>方程2（增益为-1时的关系式）：</strong></p>
+            <div class="formula">
+            $$ V_{IH} = \frac{V_{DD} + V_{TP} + K_{R}(2V_{out} + V_{TN})}{1+K_{R}} $$
+            </div>
+            <p>将数值代入方程2：</p>
+             <div class="formula">
+            $$ V_{IH} = \frac{3.3 - 0.7 + 2.5(2V_{out} + 0.6)}{1+2.5} = \frac{5V_{out} + 4.1}{3.5} \approx 1.43V_{out} + 1.17 $$
+            </div>
+            <p>将 $V_{IH}$ 的表达式代入电流方程，化简得：</p>
+             <div class="formula">
+            $$ 2.61V_{out}^2 + 6.94V_{out} - 2.04 = 0 $$
+            </div>
+            <p>解得合理根为 $V_{out} = 0.27V$。将其代回 $V_{IH}$ 表达式：</p>
+            <div class="formula">
+            $$ V_{IH} = 1.43 \times 0.27 + 1.17 = \mathbf{1.55V} $$
+            </div>
+
+            <h4>3. 计算噪声容限</h4>
+            <p>已知 $V_{OH} = V_{DD} = 3.3V$ 和 $V_{OL} = 0V$。</p>
+            <div class="formula">
+            $$ V_{NML} = V_{IL} - V_{OL} = 1.08V - 0V = \mathbf{1.08V} $$
+            </div>
+            <div class="formula">
+            $$ V_{NMH} = V_{OH} - V_{IH} = 3.3V - 1.55V = \mathbf{1.75V} $$
+            </div>
+        </div>
+
+        <div class="example-problem">
+            <h3>例题2：计算由逻辑阈值确定的最大噪声容限</h3>
+            <p><strong>问题：</strong>考虑一个CMOS反相器，电源电压3.3V，参数如下：</p>
+            <ul>
+                <li>nMOS: $V_{TN}=0.6V$, $\mu_{n}C_{ox}=60\mu A/V^{2}$, $(W/L)_n=8$。</li>
+                <li>pMOS: $V_{Tp}=-0.7V$, $\mu_{p}C_{ox}=25\mu A/V^{2}$, $(W/L)_p=12$。</li>
+            </ul>
+            <p>求该反相器由逻辑阈值确定的最大噪声容限。</p>
+            
+            <h4>1. 计算 $K_n$, $K_p$ 和 $K_R$</h4>
+            <div class="formula">
+            $$ K_n = \mu_{n}C_{ox} \times (W/L)_n = 60 \times 8 = 480 \mu A/V^2 $$
+            </div>
+            <div class="formula">
+            $$ K_p = \mu_{p}C_{ox} \times (W/L)_p = 25 \times 12 = 300 \mu A/V^2 $$
+            </div>
+            <div class="formula">
+            $$ K_R = K_n / K_p = 480 / 300 = 1.6 $$
+            </div>
+
+            <h4>2. 计算逻辑阈值 $V_{it}$</h4>
+            <p>使用逻辑阈值公式：</p>
+             <div class="formula">
+            $$ V_{it} = \frac{V_{DD} + V_{TP} + V_{TN}\sqrt{K_{R}}}{1 + \sqrt{K_{R}}} $$
+            </div>
+            <p>代入数值：</p>
+             <div class="formula">
+            $$ V_{it} = \frac{3.3 + (-0.7) + 0.6\sqrt{1.6}}{1 + \sqrt{1.6}} = \frac{2.6 + 0.6 \times 1.265}{1 + 1.265} = \frac{2.6 + 0.759}{2.265} = \frac{3.359}{2.265} \approx \mathbf{1.48V} $$
+            </div>
+            
+            <h4>3. 计算最大噪声容限</h4>
+            <p>假设 $V_{OH}=V_{DD}$ 和 $V_{OL}=0$。</p>
+            <div class="formula">
+            $$ V_{NML(max)} = V_{it} - V_{OL} = 1.48V - 0V = \mathbf{1.48V} $$
+            </div>
+            <div class="formula">
+            $$ V_{NMH(max)} = V_{OH} - V_{it} = 3.3V - 1.48V = \mathbf{1.82V} $$
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
