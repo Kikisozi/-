@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>硅集成电路工艺基础总复习</title>
+    
+    <!-- MathJax Configuration for both inline and display math -->
+    <script>
+        // MathJax 3.x configuration
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #0d47a1; /* Deep Blue */
+            --secondary-color: #002171; /* Darker Blue */
+            --accent-color: #fdd835; /* Yellow */
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --nav-bg: #e9ecef;
+            --border-color: #ced4da;
+            --header-font: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+            --body-font: 'Georgia', 'Times New Roman', serif; /* Changed font */
+            --code-font: 'Courier New', Courier, monospace;
+            --nav-width: 300px; /* Width for the sidebar */
+        }
+
+        /* General Body and Layout */
+        body {
+            font-family: var(--body-font);
+            line-height: 1.8;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            transition: all 0.3s ease;
+        }
+
+        /* Sidenav Styles */
+        #sidenav {
+            width: var(--nav-width);
+            position: fixed;
+            height: 100%;
+            overflow-y: auto;
+            background-color: var(--nav-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        #sidenav h2 {
+            font-family: var(--header-font);
+            color: var(--secondary-color);
+            font-size: 1.4em;
+            margin-top: 0;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px;
+        }
+
+        #sidenav ul { list-style-type: none; padding: 0; }
+        #sidenav li > a {
+            display: block;
+            padding: 8px 10px;
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: bold;
+            font-family: var(--header-font);
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+            word-wrap: break-word;
+        }
+        #sidenav li > a:hover { background-color: var(--primary-color); color: white; }
+        
+        #sidenav ul ul { padding-left: 20px; }
+        #sidenav ul ul a { font-weight: normal; font-size: 0.9em; color: #34495e; }
+        #sidenav ul ul a:hover { background-color: #bdc3c7; color: var(--secondary-color); }
+        
+        .key-topic-nav { display: none; } /* Hidden as per user's request for irrelevant content */
+
+        /* Main Content Styles */
+        #main-content {
+            margin-left: var(--nav-width);
+            padding: 20px 40px;
+            width: calc(100% - var(--nav-width));
+            box-sizing: border-box;
+            transition: margin-left 0.3s ease, width 0.3s ease;
+            overflow-wrap: break-word; /* Ensure wrapping */
+        }
+
+        /* Sidebar Toggle Button */
+        #menu-toggle {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Collapsed State */
+        body.sidenav-collapsed #sidenav {
+            transform: translateX(calc(-1 * var(--nav-width)));
+        }
+        body.sidenav-collapsed #main-content {
+            margin-left: 0;
+            width: 100%;
+        }
+        
+        /* General Content Styling */
+        h1, h2, h3, h4 {
+            font-family: var(--header-font);
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            word-break: break-all;
+        }
+        
+        h1 { color: var(--secondary-color); font-size: 2.5em; text-align: center; border-bottom: 3px solid var(--accent-color); margin-bottom: 30px;}
+        h2 { font-size: 2em; margin-top: 40px;}
+        h3 { font-size: 1.6em; border-bottom-style: dashed; margin-top: 30px;}
+        h4 { font-size: 1.25em; border-bottom: 1px solid #eee; margin-top: 25px;}
+
+        p, li, td { word-wrap: break-word; overflow-wrap: break-word; }
+
+        .highlight { color: #d32f2f; font-weight: bold; }
+        strong.highlight {
+            background-color: #fffde7;
+            padding: 3px 7px;
+            border-radius: 4px;
+            border: 1px solid #fbc02d;
+            font-family: var(--header-font);
+        }
+
+        .formula-box {
+            background-color: #e3f2fd;
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-size: 1.1em;
+            overflow-x: auto; /* Handle extremely long unbreakable formulas */
+        }
+        
+        .example-box, .key-topic-box { /* Key topic box might be removed, but keeping the style for now */
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
+        .example-box h4, .key-topic-box h4 {
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--accent-color);
+            margin-top: 0;
+            font-size: 1.4em;
+        }
+        .example-box ol li, .key-topic-box ol li { margin-bottom: 10px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            table-layout: fixed; /* Helps with word wrapping in tables */
+        }
+        th, td { border: 1px solid var(--border-color); padding: 12px; text-align: center; vertical-align: middle; word-wrap: break-word; }
+        th { background-color: #f1f3f5; font-family: var(--header-font); }
+        td { background-color: #fff; }
+
+        .note {
+            background-color: #e8f5e9;
+            border-left: 5px solid #4caf50;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .solution-box {
+            background-color: #f3e5f5;
+            border-left: 5px solid #8e24aa;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+        .image-placeholder {
+            display: block;
+            background-color: #e9ecef;
+            border: 2px dashed #adb5bd;
+            text-align: center;
+            padding: 40px 20px;
+            margin: 20px auto;
+            border-radius: 8px;
+            color: #495057;
+            font-style: italic;
+            max-width: 80%;
+        }
+        .page-ref {
+            font-size: 0.9em; /* Adjusted to be slightly larger than example */
+            color: #607d8b; /* Adjusted color to match general text better */
+            font-family: var(--body-font);
+            margin-left: 0.5em;
+            padding: 0.2em 0.5em;
+            background-color: #f0f4c3; /* Light yellow background */
+            border-radius: 4px;
+            border: 1px solid #cddc39; /* A border to distinguish */
+            vertical-align: bottom; /* Align with text baseline */
+        }
+
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            body { flex-direction: column; }
+            #sidenav {
+                position: fixed;
+                z-index: 1000;
+                transform: translateX(calc(-1 * var(--nav-width))); /* Start collapsed on small screens */
+            }
+            body.sidenav-open #sidenav {
+                transform: translateX(0);
+            }
+            #main-content { margin-left: 0; width: 100%; padding: 20px; }
+            #menu-toggle { display: flex; }
+        }
+        @media (min-width: 993px) {
+             #menu-toggle { display: none; } /* Hide toggle on large screens */
+        }
+        /* Ensure MathJax elements also wrap within their containers */
+        mjx-assistive-mml {
+            white-space: normal !important;
+            word-wrap: break-word !important;
+        }
+        mjx-container {
+            overflow-x: auto;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<button id="menu-toggle">&#9776;</button>
+
+<nav id="sidenav">
+    <h2>复习导航</h2>
+    <ul>
+        <li>
+            <a href="#chap1">第一章 硅的晶体结构</a>
+        </li>
+        <li><a href="#chap2">第二章 氧化</a></li>
+        <li><a href="#chap3">第三章 扩散</a></li>
+        <li><a href="#chap4">第四章 离子注入工艺</a></li>
+        <li><a href="#chap5">第五章 物理气相沉积</a></li>
+        <li><a href="#chap6">第六章 化学气相淀积</a></li>
+        <li><a href="#chap7">第七章 外延</a></li>
+        <li><a href="#chap8">第八章 光刻工艺</a></li>
+        <li><a href="#chap9">第九章 金属化与多层互连</a></li>
+        <li><a href="#chap10">第十章 工艺集成</a></li>
+    </ul>
+</nav>
+
+<div id="main-content">
+    <h1>硅集成电路工艺基础 - 深度复习指南</h1>
+
+    <div class="note">
+        <strong>提示</strong>: 本文档中的 [图片: ...] 标记为图片占位符，旨在提示原文中对应的图表位置，方便您对照PDF文档进行学习。
+    </div>
+
+    <!-- Original Content Sections - Only relevant chapters from PPT -->
+    <section id="chap1">
+        <h2 class="chapter-title">第一章 硅的晶体结构</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. 硅晶体（金刚石）结构特点：</h3>
+            <p class="content-detail">共价四面体，晶体内部存在空隙。</p>
+            <span class="page-ref">P2-3</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 某种元素能否作为扩散杂质的重要标准：</h3>
+            <p class="content-detail">杂质的最大固溶度是否大于所要求的表面浓度。</p>
+            <span class="page-ref">P18</span>
+        </div>
+    </section>
+
+    <section id="chap2">
+        <h2 class="chapter-title">第二章 氧化</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. 热氧化二氧化硅制备方法，厚膜制备方法：</h3>
+            <p class="content-detail">干氧-湿氧-干氧。</p>
+            <span class="page-ref">P35</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 热氧化厚度与时间的关系式：</h3>
+            <p class="content-detail">$$x_o^2 + Ax_o = B(t+\tau)$$</p>
+            <span class="page-ref">P38</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">3. 热氧化的生长模型：</h3>
+            <p class="content-detail">迪尔-格罗夫（Deal-Grove）模型。</p>
+            <span class="page-ref">P36</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">4. 热氧化过程中的两个极限：</h3>
+            <p class="content-detail">扩散控制（厚氧化层，长时间）和表面化学反应速率控制（薄氧化层，短时间）。</p>
+            <span class="page-ref">P38</span>
+        </div>
+    </section>
+
+    <section id="chap3">
+        <h2 class="chapter-title">第三章 扩散</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. 菲克第一定律与扩散方程：</h3>
+            <p class="content-detail">菲克第一定律：$$J=-D\frac{\partial C(x,t)}{\partial x}$$</p>
+            <p class="content-detail">扩散方程（菲克第二定律）：$$\frac{\partial C(x,t)}{\partial t}=D\frac{\partial^2 C(x,t)}{\partial x^2}$$（当D为常数时）</p>
+            <span class="page-ref">P70-71</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 扩散方法：</h3>
+            <p class="content-detail">恒定表面源扩散（余误差分布）和有限表面源扩散（高斯分布）。</p>
+            <span class="page-ref">P72</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">3. 两步扩散：</h3>
+            <p class="content-detail">预扩散（控制杂质数量，低温恒定源）和主扩散（控制表面浓度和扩散深度，高温再分布）。</p>
+            <span class="page-ref">P76</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">4. 发射区推进效应与氧化增强扩散：</h3>
+            <p class="content-detail">发射区推进效应：发射区正下方基区杂质扩散深度大于其他区域。</p>
+            <p class="content-detail">氧化增强扩散：热氧化过程中，某些掺杂原子扩散增强。</p>
+            <span class="page-ref">P82,84</span>
+        </div>
+    </section>
+
+    <section id="chap4">
+        <h2 class="chapter-title">第四章 离子注入工艺</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. LSS理论：</h3>
+            <p class="content-detail">注入离子在靶内的能量损失分为核碰撞和电子碰撞两个独立过程。</p>
+            <span class="page-ref">P95</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 沟道注入（沟道效应）及其解决方法：</h3>
+            <p class="content-detail">当注入离子方向与靶晶体某个晶向平行时，离子沿沟道运动，注入深度大于无定形靶。</p>
+            <p class="content-detail">解决方法：使晶轴方向偏离注入方向，或在晶体表面覆盖无定形介质层。</p>
+            <span class="page-ref">P104</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">3. 热退火的目的：</h3>
+            <p class="content-detail">离子注入后必须进行热退火以消除晶格损伤，并使注入离子进入晶格位置实现电激活。</p>
+            <span class="page-ref">P112</span>
+        </div>
+    </section>
+
+    <section id="chap5">
+        <h2 class="chapter-title">第五章 物理气相沉积</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. 溅射原理：</h3>
+            <p class="content-detail">带电离子轰击靶表面，使靶原子溅射出来形成薄膜。</p>
+            <span class="page-ref">P133</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 溅射基础：</h3>
+            <p class="content-detail">辉光放电。</p>
+            <span class="page-ref">P127</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">3. 磁控溅射常用气体：</h3>
+            <p class="content-detail">氩气（Ar）。</p>
+            <span class="page-ref">P139</span>
+        </div>
+    </section>
+
+    <section id="chap6">
+        <h2 class="chapter-title">第六章 化学气相淀积</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. CVD过程中源和生成物必须满足的条件：</h3>
+            <p class="content-detail">反应剂需高气压，除淀积物外产物需挥发，淀积物本身蒸气压低，淀积时间短，温度低，副产物不进入薄膜，化学反应发生在衬底表面。</p>
+            <span class="page-ref">P145</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 边界层：</h3>
+            <p class="content-detail">气流速度受到扰动的气体薄层，存在反应剂浓度梯度。</p>
+            <span class="page-ref">P146</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">3. Grove模型认为制薄膜淀积速率的两个环节：</h3>
+            <p class="content-detail">反应剂在边界层中的输运过程；反应剂在衬底表面上的化学反应过程。</p>
+            <span class="page-ref">P147</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">4. CVD薄膜淀积速率与温度的关系：</h3>
+            <p class="content-detail">低温下受表面化学反应速度控制（指数增加），高温下受质量输运速度控制（变化不敏感）。</p>
+            <span class="page-ref">P149</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">5. 化学气相淀积系统分类及控制极限：</h3>
+            <ul class="content-detail">
+                <li>常压化学气相淀积 (APCVD)：由质量输运控制。
+                    <span class="page-ref">P154-155</span>
+                </li>
+                <li>低压化学气相淀积 (LPCVD)：由表面反应速率控制。
+                    <span class="page-ref">P156</span>
+                </li>
+                <li>等离子增强化学气相淀积 (PECVD)：低温高淀积速率，结合了物理和化学作用。
+                    <span class="page-ref">P157</span>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="chap7">
+        <h2 class="chapter-title">第七章 外延</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. 外延生长单晶硅与多晶硅时，生长速率与温度的关系：</h3>
+            <p class="content-detail">高温下易生长单晶（质量输运控制），低温高生长速度时易生成多晶（表面化学反应控制）。</p>
+            <span class="page-ref">P191</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 扩散效应与自掺杂效应：</h3>
+            <p class="content-detail">扩散效应：外延生长过程中，衬底中的杂质与外延层中的杂质互相扩散，引起界面杂质浓度变化。</p>
+            <p class="content-detail">自掺杂效应：衬底和外延层中的杂质因热蒸发或腐蚀进入边界层，改变气氛杂质成分，导致外延层杂质分布偏离理想情况。</p>
+            <span class="page-ref">P198-199</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">3. 低压外延作用：</h3>
+            <p class="content-detail">减小自掺杂效应，可以得到陡峭的杂质分布，提高电阻率均匀性，减小埋层图形的漂移和畸变。</p>
+            <span class="page-ref">P201</span>
+        </div>
+    </section>
+
+    <section id="chap8">
+        <h2 class="chapter-title">第八章 光刻工艺</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. 光刻分辨率 (R) 与瑞利判据：</h3>
+            <p class="content-detail">光刻分辨率：$R = \frac{k_1 \lambda}{NA}$</p>
+            <p class="content-detail">瑞利判据：最小可分辨间隔 $\delta y = 0.61 \frac{\lambda}{NA}$</p>
+            <span class="page-ref">P225-227, 244</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 光刻原理与目的：</h3>
+            <p class="content-detail">原理：利用光刻胶受光辐照后分子结构变化，在显影液中溶解速度差异形成图形。</p>
+            <p class="content-detail">目的：将掩膜版图形转移到硅片表面。</p>
+            <span class="page-ref">P218</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">3. 光刻工艺流程及各步骤目的：</h3>
+            <ul class="content-detail">
+                <li><b>打底膜/脱水烘焙/涂粘附剂：</b>增加光刻胶附着力，防止吸水。
+                    <span class="page-ref">P219-220</span>
+                </li>
+                <li><b>涂胶（甩胶）：</b>在硅片表面涂覆均匀、无缺陷的光刻胶薄层。
+                    <span class="page-ref">P220-221</span>
+                </li>
+                <li><b>前烘（软烘）：</b>除去光刻胶中残留溶剂，降低灰尘沾污，减小薄膜应力，提高附着性。
+                    <span class="page-ref">P221</span>
+                </li>
+                <li><b>曝光：</b>使光刻胶感光区发生光化学反应。
+                    <span class="page-ref">P222</span>
+                </li>
+                <li><b>后烘（PEB）：</b>降低驻波效应，使曝光与非曝光区边界形成平均曝光效果。
+                    <span class="page-ref">P222</span>
+                </li>
+                <li><b>显影：</b>利用感光与未感光光刻胶对显影液不同溶解速度形成二维图形。
+                    <span class="page-ref">P222</span>
+                </li>
+                <li><b>坚膜：</b>除去剩余溶剂，增强附着力，提高抗蚀能力。
+                    <span class="page-ref">P225</span>
+                </li>
+                <li><b>腐蚀（刻蚀）：</b>以光刻胶为保护层，刻蚀未受保护的薄膜，转移图形。
+                    <span class="page-ref">P224</span>
+                </li>
+                <li><b>去胶：</b>去除完成使命的光刻胶。
+                    <span class="page-ref">P224</span>
+                </li>
+            </ul>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">4. 光刻胶分类：</h3>
+            <p class="content-detail">正性光刻胶和负性光刻胶。正胶的曝光区溶解，负胶的非曝光区溶解。</p>
+            <span class="page-ref">P227-228</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">5. 光刻胶厚度与涂胶旋转速率、粘度的关系：</h3>
+            <p class="content-detail">与涂胶旋转速率成反比，与光刻胶粘度成正比。</p>
+            <span class="page-ref">P220-221</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">6. 驻波效应及改善方法：</h3>
+            <p class="content-detail">驻波效应：曝光光线在光刻胶层中形成干涉，产生强弱相间的曝光区域。</p>
+            <p class="content-detail">改善方法：涂抗反射涂层，曝光后烘焙（PEB）。</p>
+            <span class="page-ref">P236-237</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">7. 湿法刻蚀特点：</h3>
+            <p class="content-detail">选择性好，方向性差（各向同性腐蚀）。</p>
+            <span class="page-ref">P258</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">8. 湿法腐蚀参数：</h3>
+            <p class="content-detail">腐蚀液配比、腐蚀温度、腐蚀时间、搅拌方式。</p>
+            <span class="page-ref">P258</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">9. 不同材料的腐蚀剂：</h3>
+            <ul class="content-detail">
+                <li><b>对二氧化硅的腐蚀：</b>氢氟酸（HF）溶液，常加入氨水（NH4F）作缓冲剂。
+                    <span class="page-ref">P258</span>
+                </li>
+                <li><b>对硅的腐蚀：</b>HNO3 + HF （或醋酸）混合液；KOH水溶液+异丙醇。
+                    <span class="page-ref">P257-258</span>
+                </li>
+                <li><b>对氮化硅的腐蚀：</b>加热的磷酸（H3PO4）。
+                    <span class="page-ref">P258</span>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="chap9">
+        <h2 class="chapter-title">第九章 金属化与多层互连</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. Al/Si接触中的尖楔现象：</h3>
+            <p class="content-detail">Si在Al中有可观溶解度，退火时Si原子从接触孔溶解到Al中，Al原子填充Si空位，形成尖刺状结构穿透pn结，导致器件失效。</p>
+            <span class="page-ref">P280-281</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 以Cu作为互连材料的常用工艺：</h3>
+            <p class="content-detail">大马士革（镶嵌）工艺。先在介质层上刻蚀沟槽和通孔，再填充铜，最后通过CMP去除多余的铜。</p>
+            <span class="page-ref">P288</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">3. 多晶硅栅特性：</h3>
+            <p class="content-detail">源漏自对准特性（通过以多晶硅栅为掩膜进行源漏扩散或离子注入，栅与源漏自动对准）。</p>
+            <span class="page-ref">P296</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">4. 平坦化目的：</h3>
+            <p class="content-detail">解决硅片表面不平整导致的淀积薄膜覆盖不均、金属引线断路、光刻聚焦困难等问题。</p>
+            <span class="page-ref">P312</span>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">5. 平坦化方法：</h3>
+            <ul class="content-detail">
+                <li>局部平坦化技术：旋涂玻璃法（SOG）。
+                    <span class="page-ref">P312</span>
+                </li>
+                <li>全面平坦化技术：化学机械抛光（CMP）。</li>
+            </ul>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">6. 为什么要进行CMP：</h3>
+            <p class="content-detail">实现全局平坦化，解决多层互连中台阶过高问题，提高薄膜覆盖均匀性，改善光刻聚焦，降低互连线缺陷和失效几率。</p>
+            <span class="page-ref">P312-314</span>
+        </div>
+    </section>
+
+    <section id="chap10">
+        <h2 class="chapter-title">第十章 工艺集成</h2>
+        <div class="content-block">
+            <h3 class="section-key-point">1. CMOS集成电路工艺流程（主要步骤）：</h3>
+            <ul class="content-detail">
+                <li><b>阱区制备：</b>热氧化形成缓冲层，LPCVD Si3N4，光刻形成阱掩膜，进行n阱/p阱离子注入，退火。
+                    <span class="page-ref">P337-338</span>
+                </li>
+                <li><b>隔离区制备：</b>LOCOS隔离（生长缓冲氧化层，LPCVD Si3N4，光刻形成场区，RIE刻蚀Si3N4），或浅槽隔离（STI）。
+                    <span class="page-ref">P337</span>
+                </li>
+                <li><b>栅极制备：</b>生长薄栅氧化层，淀积多晶硅，光刻形成栅电极图形，刻蚀多晶硅。
+                    <span class="page-ref">P337-338</span>
+                </li>
+                <li><b>源漏制备：</b>光刻注入区，LDD/扩展区注入，halo注入，淀积SiN形成侧墙，预非晶化注入，重掺杂注入，RTA退火激活，溅射Ti/Co自对准硅化物。
+                    <span class="page-ref">P337-339</span>
+                </li>
+                <li><b>金属化与互连：</b>淀积介质层，刻蚀接触孔，溅射金属，光刻形成互连线，刻蚀金属。
+                    <span class="page-ref">P339</span>
+                </li>
+                <li><b>钝化层：</b>淀积保护层。
+                    <span class="page-ref">P339</span>
+                </li>
+                <li><b>后工艺。</b>
+                    <span class="page-ref">课件</span>
+                </li>
+            </ul>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">2. 标准埋层双极集成电路工艺流程（主要步骤）：</h3>
+            <ul class="content-detail">
+                <li><b>衬底准备：</b>轻掺杂p型硅。
+                    <span class="page-ref">P345</span>
+                </li>
+                <li><b>埋层的制备：</b>生长SiO2，光刻刻蚀埋层区域，注入n型杂质（磷、砷），退火激活。
+                    <span class="page-ref">P345</span>
+                </li>
+                <li><b>外延层的生长：</b>湿法去除SiO2，外延生长轻掺杂n型硅作为集电区。
+                    <span class="page-ref">P346</span>
+                </li>
+                <li><b>隔离区的形成：</b>再生长SiO2，光刻刻蚀隔离区，预淀积硼，退火形成p型隔离区。
+                    <span class="page-ref">P346</span>
+                </li>
+                <li><b>深集电极接触的制备：</b>光刻刻蚀集电极区，注入磷，退火。
+                    <span class="page-ref">P346</span>
+                </li>
+                <li><b>基区的形成：</b>光刻刻蚀基区，注入硼，退火。
+                    <span class="page-ref">P346</span>
+                </li>
+                <li><b>发射区的形成：</b>基区生长氧化层，光刻刻蚀发射区，磷扩散和砷注入，退火。
+                    <span class="page-ref">P346</span>
+                </li>
+                <li><b>金属接触和互连：</b>淀积SiO2，光刻刻蚀接触孔，溅射金属形成欧姆接触和互连线。
+                    <span class="page-ref">P346</span>
+                </li>
+                <li><b>钝化层。</b>
+                    <span class="page-ref">P346</span>
+                </li>
+                <li><b>后工艺。</b>
+                    <span class="page-ref">课件</span>
+                </li>
+            </ul>
+        </div>
+        <div class="content-block mt-4">
+            <h3 class="section-key-point">3. 主要的后工艺及其目的：</h3>
+            <ul class="content-detail">
+                <li><b>减薄与划片：</b>通过机械研磨或化学腐蚀减薄晶片背面，然后将晶片切割成单个芯片。
+                    <span class="page-ref">课件</span>
+                </li>
+                <li><b>装片与烧结：</b>将芯片粘贴到引线框架或封装基板上，并进行烧结固化。
+                    <span class="page-ref">课件</span>
+                </li>
+                <li><b>内引线键合工艺：</b>通过引线（金线、铝线等）将芯片的焊盘与引线框架或封装基板上的外部引脚连接起来。
+                    <span class="page-ref">课件</span>
+                </li>
+                <li><b>封装（成型技术）：</b>用塑料、陶瓷或金属材料对芯片进行密封保护，防止潮湿、污染和机械损伤。
+                    <span class="page-ref">课件</span>
+                </li>
+                <li><b>测试：</b>对封装好的芯片进行功能、性能和可靠性测试，筛选出合格产品。
+                    <span class="page-ref">课件</span>
+                </li>
+            </ul>
+        </div>
+    </section>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const menuToggle = document.getElementById('menu-toggle');
+        const body = document.body;
+        const sidenav = document.getElementById('sidenav');
+        const mainContent = document.getElementById('main-content');
+
+        // Function to toggle sidebar
+        const toggleSidebar = () => {
+            if (window.innerWidth <= 992) {
+                body.classList.toggle('sidenav-open');
+                // When opening on mobile, the main content should not be interactive
+                if (body.classList.contains('sidenav-open')) {
+                    mainContent.style.pointerEvents = 'none';
+                } else {
+                    mainContent.style.pointerEvents = 'auto';
+                }
+            } else {
+                body.classList.toggle('sidenav-collapsed');
+            }
+        };
+        
+        menuToggle.addEventListener('click', toggleSidebar);
+
+        // Close sidebar when a nav link is clicked on mobile
+        const navLinks = document.querySelectorAll('#sidenav a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 992 && body.classList.contains('sidenav-open')) {
+                     body.classList.remove('sidenav-open');
+                     mainContent.style.pointerEvents = 'auto';
+                }
+            });
+        });
+        
+        // On window resize, adjust classes
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 992) {
+                body.classList.remove('sidenav-open'); // remove mobile class
+                mainContent.style.pointerEvents = 'auto';
+            } else {
+                body.classList.remove('sidenav-collapsed'); // remove desktop class
+            }
+        });
+
+        // Highlight active navigation link based on scroll position
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                // Offset by half of window height to make it more intuitive
+                if (pageYOffset >= sectionTop - window.innerHeight / 2) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(a => {
+                a.classList.remove('active');
+                if (a.getAttribute('href').includes(current)) {
+                    a.classList.add('active');
+                }
+            });
+        });
+
+        // Initial active link highlight
+        if (sections.length > 0) {
+            navLinks.forEach(a => {
+                a.classList.remove('active');
+                if (a.getAttribute('href').includes(sections[0].getAttribute('id'))) {
+                    a.classList.add('active');
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
