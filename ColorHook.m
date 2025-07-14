@@ -1,13 +1,12 @@
 #import <Foundation/Foundation.h>
 #import <dlfcn.h>
 #import <math.h>
-
-// 【重要修正】使用正确的iOS OpenGLES头文件路径
 #import <OpenGLES/ES2/gl.h>
 
-#import "substrate.h" // 引入我们自己的头文件
+// 引入 Dobby 头文件 (将由工作流自动下载)
+#import "dobby.h"
 
-// --- 1. 配置颜色常量 ---
+// --- 1. 配置颜色常量 (保持不变) ---
 const GLfloat TARGET_R = 0.25365f;
 const GLfloat TARGET_G = 0.10376f;
 const GLfloat TARGET_B = 0.23924f;
@@ -23,7 +22,7 @@ const float EPSILON = 0.0001f;
 // --- 2. 定义函数指针保存原始函数地址 ---
 static void (*original_glUniform4fv)(GLint location, GLsizei count, const GLfloat *value);
 
-// --- 3. 编写替换函数 ---
+// --- 3. 编写替换函数 (保持不变) ---
 void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *value) {
     if (count == 1 && value != NULL) {
         if (fabsf(value[0] - TARGET_R) < EPSILON) {
@@ -51,7 +50,8 @@ static void initialize() {
     void *original_function_ptr = dlsym(handle, "glUniform4fv");
     if (!original_function_ptr) return;
     
-    MSHookFunction(original_function_ptr, (void *)replacement_glUniform4fv, (void **)&original_glUniform4fv);
+    // 【重要改动】使用 DobbyHook 进行 Hook
+    DobbyHook(original_function_ptr, (void *)replacement_glUniform4fv, (void **)&original_glUniform4fv);
     
     dlclose(handle);
 }
