@@ -3,16 +3,10 @@ DYLIB_NAME = ColorHook.dylib
 
 # 定义默认的编译任务
 all:
-	@echo "--- 开始编译 ---"
-	# 使用clang编译器进行编译
-	# 注意：多行命令的每一行末尾都必须有反斜杠 \
-	clang -I. -dynamiclib -arch arm64 \
-	-isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
-	-framework Foundation \
-	-framework OpenGLES \
-	-o $(DYLIB_NAME) ColorHook.m
-	@echo "--- 编译完成: $(DYLIB_NAME) ---"
-
-# 定义清理任务（可选）
-clean:
-	rm -f $(DYLIB_NAME)
+	@echo "--- [v3 最终版] 开始编译 ---"
+	# -v: 启用详细模式，打印所有编译步骤
+	# 调整了参数顺序，将输入文件放在输出文件之前
+	clang -v -I. -dynamiclib -arch arm64 -isysroot `xcrun --sdk iphoneos --show-sdk-path` \
+	-framework Foundation -framework OpenGLES \
+	ColorHook.m -o $(DYLIB_NAME)
+	@echo "--- [v3 最终版] 编译完成 ---"
