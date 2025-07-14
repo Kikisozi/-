@@ -1,5 +1,5 @@
 # 工作流名称
-name: Build Dylib with Cloned Dependencies
+name: Build Dylib with Self-Contained Dobby
 
 # 触发条件
 on:
@@ -16,20 +16,24 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      # 2. 【最终方案】克隆官方依赖库并复制文件
-      - name: Clone Theos SDKs and get libsubstrate
+      # 2. 下载并准备Dobby依赖库
+      - name: Download and Prepare Dobby
         run: |
-          echo "--- Cloning Theos SDK repository ---"
-          # 克隆官方的SDK仓库，--depth 1 表示只下载最新的版本，加快速度
-          git clone --depth 1 https://github.com/theos/sdks.git
+          echo "--- Downloading Dobby pre-built library ---"
+          # 从Dobby的官方GitHub Release下载预编译好的zip包
+          curl -LO https://github.com/jmpews/Dobby/releases/download/v2.2.1/dobby-ios-arm64.zip
           
-          echo "--- Copying libsubstrate.dylib to current directory ---"
-          # 从克隆下来的文件夹中，将我们需要的dylib复制到当前工作目录
-          cp sdks/lib/libsubstrate.dylib .
+          echo "--- Unzipping Dobby package ---"
+          # 解压zip包
+          unzip dobby-ios-arm64.zip
           
-          echo "--- Verifying file exists ---"
-          # 确认文件已成功复制
-          ls -la libsubstrate.dylib
+          echo "--- Copying Dobby files to root directory ---"
+          # 将头文件和静态库文件复制到当前工作目录，以供Makefile使用
+          cp dobby-ios-arm64/dobby.h .
+          cp dobby-ios-arm64/libdobby.a .
+          
+          echo "--- Verifying files exist ---"
+          ls -la dobby.h libdobby.a
 
       # 3. 执行编译
       - name: Compile the dylib
