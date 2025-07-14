@@ -25,4 +25,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ColorHook-Dylib
-          path: ColorHook1.dylib
+          path: ColorHook.dylib
