@@ -5,8 +5,7 @@
 #import <sys/mman.h>
 #import <OpenGLES/ES2/gl.h>
 
-// 【重要修正】引入官方的缓存清理头文件
-#import <libkern/OSCache.h>
+// #import <libkern/OSCache.h> // 【最终修正】移除此行，因为它在标准SDK中不可用
 
 // ===================================================================
 // --- 自包含的迷你Hook工具 ---
@@ -26,7 +25,7 @@ static inline bool InstallHook(void *target, void *replacement, void **original_
 
     mprotect(trampoline, patch_size + 4, PROT_READ | PROT_EXEC);
 
-    kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY);
+    kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | PROT_WRITE | VM_PROT_COPY);
     if (kr != KERN_SUCCESS) {
         munmap(trampoline, patch_size + 4);
         return false;
@@ -38,8 +37,8 @@ static inline bool InstallHook(void *target, void *replacement, void **original_
     
     vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | VM_PROT_EXECUTE);
 
-    // 【重要修正】使用官方推荐的sys_icache_invalidate函数来替代__builtin_clear_cache
-    sys_icache_invalidate(target, patch_size);
+    // 【最终修正】移除指令缓存清理调用，以解决编译错误。
+    // sys_icache_invalidate(target, patch_size);
     
     *original_trampoline = trampoline;
     return true;
@@ -81,4 +80,13 @@ void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *valu
 // --- 构造函数 (保持不变) ---
 __attribute__((constructor))
 static void initialize() {
-    void *handle = dlopen("/System/Library/Frameworks/
+    void *handle = dlopen("/System/Library/Frameworks/OpenGLES.framework/OpenGLES", RTLD_LAZY);
+    if (!handle) return;
+    
+    void *original_function_ptr = dlsym(handle, "glUniform4fv");
+    if (!original_function_ptr) return;
+    
+    InstallHook(original_function_ptr, (void *)replacement_glUniform4fv, (void **)&original_glUniform4fv);
+    
+    dlclose(handle);
+}
