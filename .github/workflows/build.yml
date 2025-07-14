@@ -1,5 +1,5 @@
 # 工作流名称
-name: Build Self-Contained Dylib
+name: Build Dylib
 
 # 触发条件
 on:
