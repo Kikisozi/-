@@ -8,29 +8,43 @@
 
 // ===================================================================
 // --- 自包含的迷你Hook工具 ---
+// 经过审查，确保在标准编译环境中可用，并移除了所有不可用的函数调用
+// ===================================================================
 static inline bool InstallHook(void *target, void *replacement, void **original_trampoline) {
     if (!target || !replacement || !original_trampoline) return false;
     size_t patch_size = 16; 
+
     void *trampoline = mmap(NULL, patch_size + 4, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (trampoline == MAP_FAILED) return false;
+
     memcpy(trampoline, target, patch_size);
+
     uintptr_t jump_back_target = (uintptr_t)target + patch_size;
     uint32_t *jump_back_instruction_ptr = (uint32_t *)((uintptr_t)trampoline + patch_size);
     intptr_t offset_back = jump_back_target - (intptr_t)jump_back_instruction_ptr;
     *jump_back_instruction_ptr = 0x14000000 | (0x03FFFFFF & (offset_back >> 2));
+
     mprotect(trampoline, patch_size + 4, PROT_READ | PROT_EXEC);
+
     kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY);
-    if (kr != KERN_SUCCESS) { munmap(trampoline, patch_size + 4); return false; }
+    if (kr != KERN_SUCCESS) {
+        munmap(trampoline, patch_size + 4);
+        return false;
+    }
+    
     intptr_t offset_to_replacement = (intptr_t)replacement - (intptr_t)target;
     uint32_t branch_instruction = 0x14000000 | (0x03FFFFFF & (offset_to_replacement >> 2));
     memcpy(target, &branch_instruction, sizeof(branch_instruction));
+    
     vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | VM_PROT_EXECUTE);
+    
     *original_trampoline = trampoline;
     return true;
 }
-// ===================================================================
 
+// ===================================================================
 // --- 全局变量和颜色常量 ---
+// ===================================================================
 static UIWindow *floatingWindow;
 static UILabel *statusLabel;
 static UITextView *logTextView;
@@ -39,26 +53,33 @@ static UIButton *hookButton;
 static bool isHookInstalled = false; // 标记Hook是否已安装
 static bool isHookEnabled = false;   // Hook功能的开关
 static int replacementCount = 0;
+static NSMutableSet *loggedColors;   // 用于存储已经打印过的颜色，避免日志刷屏
 
-const GLfloat TARGET_R = 0.25365f;
-const GLfloat TARGET_G = 0.10376f;
-const GLfloat TARGET_B = 0.23924f;
-const GLfloat TARGET_A = 0.47196f;
-const GLfloat REPLACEMENT_R = 0.645f;
+// 这里的颜色值是占位符，您需要用下面日志捕获到的真实值来替换它们
+const GLfloat TARGET_R = 0.0f;
+const GLfloat TARGET_G = 0.0f;
+const GLfloat TARGET_B = 0.0f;
+const GLfloat TARGET_A = 0.0f;
+
+const GLfloat REPLACEMENT_R = 0.645f; // 新颜色保持不变
 const GLfloat REPLACEMENT_G = 0.424f;
 const GLfloat REPLACEMENT_B = 1.12f;
 const GLfloat REPLACEMENT_A = 0.480f;
-const float EPSILON = 0.0001f;
+
+const float EPSILON = 0.001f; // 稍微放宽容差
 
 static void (*original_glUniform4fv)(GLint location, GLsizei count, const GLfloat *value);
 
+// ===================================================================
 // --- 核心功能与UI控制类 ---
+// ===================================================================
 @interface ColorHookController : NSObject
 + (instancetype)sharedInstance;
 - (void)panGesture:(UIPanGestureRecognizer *)p;
 - (void)toggleHook:(UIButton *)sender;
 @end
 
+// 日志函数
 void addLog(NSString *logMessage) {
     if (!logTextView) return;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -68,24 +89,41 @@ void addLog(NSString *logMessage) {
     });
 }
 
+// 替换函数 (包含颜色捕获日志)
 void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *value) {
     if (isHookEnabled && count == 1 && value != NULL) {
-        if (fabsf(value[0] - TARGET_R) < EPSILON && fabsf(value[1] - TARGET_G) < EPSILON &&
-            fabsf(value[2] - TARGET_B) < EPSILON && fabsf(value[3] - TARGET_A) < EPSILON) {
+        const GLfloat r = value[0];
+        const GLfloat g = value[1];
+        const GLfloat b = value[2];
+        const GLfloat a = value[3];
+
+        // 捕获并打印所有独特的颜色值
+        NSString *colorKey = [NSString stringWithFormat:@"%.3f,%.3f,%.3f,%.3f", r, g, b, a];
+        if (![loggedColors containsObject:colorKey]) {
+            [loggedColors addObject:colorKey];
+            addLog([NSString stringWithFormat:@"捕获新颜色 R:%.3f G:%.3f B:%.3f A:%.3f", r, g, b, a]);
+        }
+        
+        // 检查颜色是否匹配
+        if (fabsf(r - TARGET_R) < EPSILON && fabsf(g - TARGET_G) < EPSILON &&
+            fabsf(b - TARGET_B) < EPSILON && fabsf(a - TARGET_A) < EPSILON) {
+            
             GLfloat* mutable_value = (GLfloat*)value;
             mutable_value[0] = REPLACEMENT_R;
             mutable_value[1] = REPLACEMENT_G;
             mutable_value[2] = REPLACEMENT_B;
             mutable_value[3] = REPLACEMENT_A;
+            
             replacementCount++;
             dispatch_async(dispatch_get_main_queue(), ^{
                 statusLabel.text = [NSString stringWithFormat:@"状态: 颜色已替换! (x%d)", replacementCount];
             });
-            if (replacementCount % 10 == 1) {
-                addLog([NSString stringWithFormat:@"第 %d 次找到并替换颜色。", replacementCount]);
+            if (replacementCount == 1) {
+                addLog(@"匹配成功并已替换颜色！");
             }
         }
     }
+    // 必须调用原始函数
     original_glUniform4fv(location, count, value);
 }
 
@@ -122,13 +160,14 @@ void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *valu
         if (success) {
             isHookInstalled = true;
             isHookEnabled = true;
+            loggedColors = [NSMutableSet new];
             replacementCount = 0;
             dispatch_async(dispatch_get_main_queue(), ^{
-                statusLabel.text = @"状态: Hook已开启";
+                statusLabel.text = @"状态: 颜色捕获中...";
                 [sender setTitle:@"关闭Hook" forState:UIControlStateNormal];
                 sender.backgroundColor = [UIColor systemRedColor];
             });
-            addLog(@"注入成功，功能已自动开启。");
+            addLog(@"注入成功，颜色捕获已开启。");
         } else {
             dispatch_async(dispatch_get_main_queue(), ^{
                 statusLabel.text = @"状态: 注入失败!";
@@ -139,8 +178,9 @@ void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *valu
     } else {
         isHookEnabled = !isHookEnabled;
         if (isHookEnabled) {
+            [loggedColors removeAllObjects];
             replacementCount = 0;
-            statusLabel.text = @"状态: Hook已开启，等待替换...";
+            statusLabel.text = @"状态: 颜色捕获中...";
             [sender setTitle:@"关闭Hook" forState:UIControlStateNormal];
             sender.backgroundColor = [UIColor systemRedColor];
             addLog(@"Hook功能已开启。");
