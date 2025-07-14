@@ -10,5 +10,5 @@ all:
 	-framework OpenGLES \
 	-framework UIKit \
 	-framework CoreGraphics \
-	ColorHook.m -o $(DYLIB_NAME)
+	ColorHook1.m -o $(DYLIB_NAME)
 	@echo "--- [v8 最终链接修正版] 编译完成 ---"
