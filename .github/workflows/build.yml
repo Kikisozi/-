@@ -1,52 +1,32 @@
 # 工作流名称
-name: Build and Commit Dylib
+name: Build Dylib and Provide Download
 
 # 触发条件
 on:
-  # 当有代码推送到主分支时触发
   push:
     branches: [ "main", "master" ]
-  # 允许手动触发
   workflow_dispatch:
 
 jobs:
   build:
-    # 【重要】防止无限循环：如果提交信息包含[ci skip]，则跳过此任务
-    if: "!contains(github.event.head_commit.message, '[ci skip]')"
-    
-    # 运行环境：使用最新的macOS系统
     runs-on: macos-latest
 
     steps:
-      # 第一步：检出（下载）你的仓库代码到虚拟机
+      # 1. 检出代码
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      # 第二步：执行编译
-      - name: Compile the dylib using Makefile
+      # 2. 执行编译
+      - name: Compile the dylib
         run: make
 
-      # 第三步：配置Git用户信息
-      # 这一步是模拟一个用户，以便进行提交
-      - name: Configure Git User
-        run: |
-          git config --global user.name 'GitHub Actions Bot'
-          git config --global user.email 'github-actions-bot@github.com'
+      # 3. 检查生成的文件（调试步骤）
+      - name: List files after build
+        run: ls -la
 
-      # 第四步：提交并推送dylib文件
-      - name: Commit and Push Dylib
-        run: |
-          # 将新生成的文件添加到Git的暂存区
-          git add ColorHook.dylib
-          
-          # 检查是否有文件变动。如果没有变动（比如重新运行），则不执行提交
-          if git diff --staged --quiet; then
-            echo "Dylib has not changed. No commit needed."
-          else
-            # 创建一个新的提交
-            # 提交信息中包含 [ci skip] 是为了防止触发新的工作流，避免无限循环
-            git commit -m "chore: Build and add ColorHook.dylib [ci skip]"
-            
-            # 将新的提交推送到远程仓库的主分支
-            git push
-          fi
+      # 4. 上传编译产物以供下载
+      - name: Upload dylib artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ColorHook-Dylib
+          path: ColorHook.dylib
