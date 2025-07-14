@@ -1,5 +1,5 @@
 # 工作流名称
-name: Build Dylib with Self-Contained Dobby
+name: Build Self-Contained Dylib
 
 # 触发条件
 on:
@@ -12,38 +12,15 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # 1. 检出我们自己的代码
+      # 1. 检出代码
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      # 2. 下载并准备Dobby依赖库
-      - name: Download and Prepare Dobby
-        run: |
-          echo "--- Downloading Dobby pre-built library ---"
-          # 从Dobby的官方GitHub Release下载预编译好的zip包
-          curl -LO https://github.com/jmpews/Dobby/releases/download/v2.2.1/dobby-ios-arm64.zip
-          
-          echo "--- Unzipping Dobby package ---"
-          # 解压zip包
-          unzip dobby-ios-arm64.zip
-          
-          echo "--- Copying Dobby files to root directory ---"
-          # 将头文件和静态库文件复制到当前工作目录，以供Makefile使用
-          cp dobby-ios-arm64/dobby.h .
-          cp dobby-ios-arm64/libdobby.a .
-          
-          echo "--- Verifying files exist ---"
-          ls -la dobby.h libdobby.a
-
-      # 3. 执行编译
+      # 2. 执行编译
       - name: Compile the dylib
         run: make
 
-      # 4. 检查生成的文件
-      - name: List files after build
-        run: ls -la
-
-      # 5. 上传编译产物以供下载
+      # 3. 上传编译产物
       - name: Upload dylib artifact
         uses: actions/upload-artifact@v4
         with:
