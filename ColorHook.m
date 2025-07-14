@@ -5,49 +5,42 @@
 #import <sys/mman.h>
 #import <OpenGLES/ES2/gl.h>
 
+// 【重要修正】引入官方的缓存清理头文件
+#import <libkern/OSCache.h>
+
 // ===================================================================
 // --- 自包含的迷你Hook工具 ---
-// 一个精简的、用于AArch64架构的Inline Hook实现，不再依赖外部库。
 static inline bool InstallHook(void *target, void *replacement, void **original_trampoline) {
     if (!target || !replacement || !original_trampoline) return false;
-
-    // AArch64指令为4字节宽。我们为蹦床（trampoline）保存4条指令（16字节）以确保安全。
     size_t patch_size = 16; 
 
-    // 创建蹦床：用于存放原始指令 + 一个跳回原函数的跳转指令
     void *trampoline = mmap(NULL, patch_size + 4, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (trampoline == MAP_FAILED) return false;
 
-    // 1. 将原始函数开头的指令复制到蹦床
     memcpy(trampoline, target, patch_size);
 
-    // 2. 在蹦床末尾添加一个跳回原函数（在被覆盖部分之后）的跳转指令
     uintptr_t jump_back_target = (uintptr_t)target + patch_size;
     uint32_t *jump_back_instruction_ptr = (uint32_t *)((uintptr_t)trampoline + patch_size);
     intptr_t offset_back = jump_back_target - (intptr_t)jump_back_instruction_ptr;
-    *jump_back_instruction_ptr = 0x14000000 | (0x03FFFFFF & (offset_back >> 2)); // B instruction
+    *jump_back_instruction_ptr = 0x14000000 | (0x03FFFFFF & (offset_back >> 2));
 
-    // 3. 使蹦床的内存页变为可执行
     mprotect(trampoline, patch_size + 4, PROT_READ | PROT_EXEC);
 
-    // 4. 修改目标函数的内存页为可写
     kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY);
     if (kr != KERN_SUCCESS) {
         munmap(trampoline, patch_size + 4);
         return false;
     }
     
-    // 5. 将一个跳转到我们替换函数的指令写入目标函数的开头
     intptr_t offset_to_replacement = (intptr_t)replacement - (intptr_t)target;
-    uint32_t branch_instruction = 0x14000000 | (0x03FFFFFF & (offset_to_replacement >> 2)); // B instruction
+    uint32_t branch_instruction = 0x14000000 | (0x03FFFFFF & (offset_to_replacement >> 2));
     memcpy(target, &branch_instruction, sizeof(branch_instruction));
     
-    // 6. 恢复目标函数的原始内存权限
     vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | VM_PROT_EXECUTE);
 
-    // 7. 清理指令缓存，确保CPU执行的是我们的新指令
-    __builtin_clear_cache((char *)target, (char *)target + patch_size);
-
+    // 【重要修正】使用官方推荐的sys_icache_invalidate函数来替代__builtin_clear_cache
+    sys_icache_invalidate(target, patch_size);
+    
     *original_trampoline = trampoline;
     return true;
 }
@@ -85,18 +78,7 @@ void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *valu
     original_glUniform4fv(location, count, value);
 }
 
-// --- 构造函数 (使用我们自己的Hook工具) ---
+// --- 构造函数 (保持不变) ---
 __attribute__((constructor))
 static void initialize() {
-    void *handle = dlopen("/System/Library/Frameworks/OpenGLES.framework/OpenGLES", RTLD_LAZY);
-    if (!handle) return;
-    
-    void *original_function_ptr = dlsym(handle, "glUniform4fv");
-    if (!original_function_ptr) return;
-    
-    // 【重要改动】使用我们自己实现的InstallHook进行Hook
-    InstallHook(original_function_ptr, (void *)replacement_glUniform4fv, (void **)&original_glUniform4fv);
-    
-    dlclose(handle);
-}
-
+    void *handle = dlopen("/System/Library/Frameworks/
