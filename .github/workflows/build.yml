@@ -1,5 +1,5 @@
 # 工作流名称
-name: Build Dylib with Theos Dependencies
+name: Build Dylib with Cloned Dependencies
 
 # 触发条件
 on:
@@ -12,28 +12,24 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # 1. 检出代码
+      # 1. 检出我们自己的代码
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      # 2. 【最终修正】下载并提取依赖库
-      - name: Download and Extract Dependencies
+      # 2. 【最终方案】克隆官方依赖库并复制文件
+      - name: Clone Theos SDKs and get libsubstrate
         run: |
-          echo "--- Downloading libsubstrate from Theos repo ---"
-          # 使用Theos项目维护的更可靠的源
-          curl -LO https://github.com/theos/sdks/raw/master/lib/libsubstrate.dylib
+          echo "--- Cloning Theos SDK repository ---"
+          # 克隆官方的SDK仓库，--depth 1 表示只下载最新的版本，加快速度
+          git clone --depth 1 https://github.com/theos/sdks.git
           
-          echo "--- Verifying downloaded file ---"
-          # 验证下载的是否是一个有效的 dylib 文件，而不是HTML错误页面
-          # file命令会输出文件类型，我们用grep检查是否包含 "Mach-O" (可执行文件特征)
-          file libsubstrate.dylib | grep "Mach-O"
+          echo "--- Copying libsubstrate.dylib to current directory ---"
+          # 从克隆下来的文件夹中，将我们需要的dylib复制到当前工作目录
+          cp sdks/lib/libsubstrate.dylib .
           
-          if [ $? -ne 0 ]; then
-            echo "Error: Downloaded file is not a valid dylib."
-            exit 1
-          fi
-          
-          echo "--- Dependencies ready ---"
+          echo "--- Verifying file exists ---"
+          # 确认文件已成功复制
+          ls -la libsubstrate.dylib
 
       # 3. 执行编译
       - name: Compile the dylib
