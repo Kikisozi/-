@@ -2,11 +2,12 @@
 #import <dlfcn.h>
 #import <mach/mach.h>
 #import <sys/mman.h>
-#import <OpenGLES/ES2/gl.h>
+#import <objc/runtime.h> // 引入Objective-C运行时头文件
 #import <UIKit/UIKit.h>
+#import <Metal/Metal.h>   // 引入Metal框架头文件
 
 // ===================================================================
-// --- 自包含的迷你Hook工具 (无需改动) ---
+// --- 自包含的迷你Hook工具 ---
 static inline bool InstallHook(void *target, void *replacement, void **original_trampoline) {
     if (!target || !replacement || !original_trampoline) return false;
     size_t patch_size = 16; 
@@ -34,24 +35,22 @@ static UIWindow *floatingWindow;
 static UILabel *statusLabel;
 static UITextView *logTextView;
 static UIButton *hookButton;
-
 static bool isHookInstalled = false;
-static bool isMonitoringEnabled = false; // 开关现在用于控制监控
-static long long drawCallCount = 0;   // 绘制调用计数器
+static bool isMonitoringEnabled = false;
+static long long metalDrawCallCount = 0;
 
 // --- Hook目标函数原型 ---
-static void (*original_glDrawElements)(GLenum mode, GLsizei count, GLenum type, const void *indices);
+static void (*original_drawIndexedPrimitives)(id self, SEL _cmd, MTLPrimitiveType primitiveType, NSUInteger indexCount, MTLIndexType indexType, id<MTLBuffer> indexBuffer, NSUInteger indexBufferOffset);
 
 // ===================================================================
 // --- 核心功能与UI控制类 ---
 // ===================================================================
-@interface GLESMonitorController : NSObject
+@interface MetalMonitorController : NSObject
 + (instancetype)sharedInstance;
 - (void)panGesture:(UIPanGestureRecognizer *)p;
 - (void)toggleMonitoring:(UIButton *)sender;
 @end
 
-// 日志函数
 void addLog(NSString *logMessage) {
     if (!logTextView) return;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -61,31 +60,26 @@ void addLog(NSString *logMessage) {
     });
 }
 
-// 【重要改动】替换函数现在监控glDrawElements
-void replacement_glDrawElements(GLenum mode, GLsizei count, GLenum type, const void *indices) {
+// 替换函数，监控Metal绘制调用
+void replacement_drawIndexedPrimitives(id self, SEL _cmd, MTLPrimitiveType primitiveType, NSUInteger indexCount, MTLIndexType indexType, id<MTLBuffer> indexBuffer, NSUInteger indexBufferOffset) {
     if (isMonitoringEnabled) {
-        drawCallCount++;
-        
-        // 为了避免日志刷屏，我们只在UI上更新计数，并每隔一段时间打印一次日志
-        if (drawCallCount % 200 == 1) { // 每调用200次
+        metalDrawCallCount++;
+        if (metalDrawCallCount % 500 == 1) { // 节流，避免日志刷屏
             dispatch_async(dispatch_get_main_queue(), ^{
-                statusLabel.text = [NSString stringWithFormat:@"状态: 捕获到绘制! (x%lld)", drawCallCount];
+                statusLabel.text = [NSString stringWithFormat:@"状态: 捕获到Metal绘制! (x%lld)", metalDrawCallCount];
             });
-            // 打印更详细的信息
-            addLog([NSString stringWithFormat:@"[Call %lld] mode:0x%X, count:%d", drawCallCount, mode, count]);
+            addLog([NSString stringWithFormat:@"[Metal Call %lld] count:%lu", metalDrawCallCount, (unsigned long)indexCount]);
         }
     }
-    
-    // 必须调用原始函数，否则游戏画面将不会被渲染
-    original_glDrawElements(mode, count, type, indices);
+    original_drawIndexedPrimitives(self, _cmd, primitiveType, indexCount, indexType, indexBuffer, indexBufferOffset);
 }
 
-@implementation GLESMonitorController
+@implementation MetalMonitorController
 + (instancetype)sharedInstance {
-    static GLESMonitorController *instance = nil;
+    static MetalMonitorController *instance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        instance = [[GLESMonitorController alloc] init];
+        instance = [[MetalMonitorController alloc] init];
     });
     return instance;
 }
@@ -97,40 +91,44 @@ void replacement_glDrawElements(GLenum mode, GLsizei count, GLenum type, const v
     [p setTranslation:CGPointZero inView:window];
 }
 
-// 【重要改动】按钮现在控制监控的开启和关闭
 - (void)toggleMonitoring:(UIButton *)sender {
     if (!isHookInstalled) {
-        addLog(@"首次点击，开始安装Hook...");
-        void *handle = dlopen("/System/Library/Frameworks/OpenGLES.framework/OpenGLES", RTLD_LAZY);
-        if (!handle) { addLog(@"错误: 无法打开OpenGLES框架!"); return; }
-        addLog(@"成功打开OpenGLES。");
-        
-        void *target_func_ptr = dlsym(handle, "glDrawElements");
-        if (!target_func_ptr) { addLog(@"错误: 无法找到glDrawElements函数!"); dlclose(handle); return; }
-        addLog(@"成功定位glDrawElements。");
-        
-        bool success = InstallHook(target_func_ptr, (void *)replacement_glDrawElements, (void **)&original_glDrawElements);
-        
+        addLog(@"首次点击，开始安装Metal Hook...");
+        Class targetClass = NSClassFromString(@"MTLDebugRenderCommandEncoder");
+        if (!targetClass) {
+            targetClass = NSClassFromString(@"_MTLDebugRenderCommandEncoder");
+            if (!targetClass) { addLog(@"错误: 找不到MTLRenderCommandEncoder类!"); return; }
+        }
+        addLog(@"成功找到Metal渲染类。");
+
+        SEL targetSelector = @selector(drawIndexedPrimitives:indexCount:indexType:indexBuffer:indexBufferOffset:);
+        Method targetMethod = class_getInstanceMethod(targetClass, targetSelector);
+        if (!targetMethod) { addLog(@"错误: 找不到drawIndexedPrimitives方法!"); return; }
+        addLog(@"成功定位Metal绘制方法。");
+            
+        void *target_method_ptr = (void *)method_getImplementation(targetMethod);
+
+        bool success = InstallHook(target_method_ptr, (void *)replacement_drawIndexedPrimitives, (void **)&original_drawIndexedPrimitives);
+
         if (success) {
             isHookInstalled = true;
             isMonitoringEnabled = true;
-            drawCallCount = 0;
+            metalDrawCallCount = 0;
             dispatch_async(dispatch_get_main_queue(), ^{
-                statusLabel.text = @"状态: 监控中...";
+                statusLabel.text = @"状态: Metal监控中...";
                 [sender setTitle:@"停止监控" forState:UIControlStateNormal];
                 sender.backgroundColor = [UIColor systemRedColor];
             });
-            addLog(@"注入成功，监控已开启。");
+            addLog(@"注入Metal方法成功，监控已开启。");
         } else {
-            dispatch_async(dispatch_get_main_queue(), ^{ statusLabel.text = @"状态: 注入失败!"; });
-            addLog(@"注入失败!");
+            dispatch_async(dispatch_get_main_queue(), ^{ statusLabel.text = @"状态: Metal注入失败!"; });
+            addLog(@"注入Metal方法失败!");
         }
-        dlclose(handle);
     } else {
         isMonitoringEnabled = !isMonitoringEnabled;
         if (isMonitoringEnabled) {
-            drawCallCount = 0;
-            statusLabel.text = @"状态: 监控中...";
+            metalDrawCallCount = 0;
+            statusLabel.text = @"状态: Metal监控中...";
             [sender setTitle:@"停止监控" forState:UIControlStateNormal];
             sender.backgroundColor = [UIColor systemRedColor];
             addLog(@"监控已开启。");
@@ -153,7 +151,7 @@ void createFloatingWindow() {
         floatingWindow.windowLevel = UIWindowLevelAlert + 1;
         floatingWindow.hidden = NO;
         
-        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:[GLESMonitorController sharedInstance] action:@selector(panGesture:)];
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:[MetalMonitorController sharedInstance] action:@selector(panGesture:)];
         [floatingWindow addGestureRecognizer:pan];
 
         statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 230, 20)];
@@ -165,19 +163,19 @@ void createFloatingWindow() {
 
         hookButton = [UIButton buttonWithType:UIButtonTypeSystem];
         hookButton.frame = CGRectMake(10, 40, 230, 30);
-        [hookButton setTitle:@"安装并开始监控" forState:UIControlStateNormal];
-        [hookButton addTarget:[GLESMonitorController sharedInstance] action:@selector(toggleMonitoring:) forControlEvents:UIControlEventTouchUpInside];
-        hookButton.backgroundColor = [UIColor systemGreenColor];
+        [hookButton setTitle:@"安装并监控Metal" forState:UIControlStateNormal];
+        [hookButton addTarget:[MetalMonitorController sharedInstance] action:@selector(toggleMonitoring:) forControlEvents:UIControlEventTouchUpInside];
+        hookButton.backgroundColor = [UIColor systemIndigoColor];
         [hookButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         hookButton.layer.cornerRadius = 5;
         [floatingWindow addSubview:hookButton];
 
         logTextView = [[UITextView alloc] initWithFrame:CGRectMake(10, 80, 230, 110)];
         logTextView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.5];
-        logTextView.textColor = [UIColor systemTealColor];
+        logTextView.textColor = [UIColor systemOrangeColor];
         logTextView.font = [UIFont monospacedSystemFontOfSize:10 weight:UIFontWeightRegular];
         logTextView.editable = NO;
-        logTextView.text = @"日志输出:\n";
+        logTextView.text = @"Metal日志输出:\n";
         [floatingWindow addSubview:logTextView];
     });
 }
