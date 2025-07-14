@@ -1,5 +1,5 @@
 # 工作流名称
-name: Build Dylib with Substrate
+name: Build Dylib with Theos Dependencies
 
 # 触发条件
 on:
@@ -16,24 +16,24 @@ jobs:
       - name: Checkout repository code
         uses: actions/checkout@v4
 
-      # 2. 【新增步骤】下载并提取 libsubstrate.dylib
-      - name: Download and Extract Substrate
+      # 2. 【最终修正】下载并提取依赖库
+      - name: Download and Extract Dependencies
         run: |
-          echo "--- Downloading MobileSubstrate package ---"
-          # 从一个可靠的官方源下载 .deb 文件
-          curl -LO http://apt.saurik.com/debs/mobilesubstrate_0.9.7111_iphoneos-arm.deb
+          echo "--- Downloading libsubstrate from Theos repo ---"
+          # 使用Theos项目维护的更可靠的源
+          curl -LO https://github.com/theos/sdks/raw/master/lib/libsubstrate.dylib
           
-          echo "--- Extracting .deb package ---"
-          # 使用 ar 工具提取 .deb 包中的 data.tar.xz
-          ar -x mobilesubstrate_0.9.7111_iphoneos-arm.deb
+          echo "--- Verifying downloaded file ---"
+          # 验证下载的是否是一个有效的 dylib 文件，而不是HTML错误页面
+          # file命令会输出文件类型，我们用grep检查是否包含 "Mach-O" (可执行文件特征)
+          file libsubstrate.dylib | grep "Mach-O"
           
-          echo "--- Extracting dylib from data archive ---"
-          # 使用 tar 工具从 data.tar.xz 中提取我们需要的 dylib 到当前目录
-          tar -xf data.tar.xz ./usr/lib/libsubstrate.dylib
+          if [ $? -ne 0 ]; then
+            echo "Error: Downloaded file is not a valid dylib."
+            exit 1
+          fi
           
-          echo "--- Moving dylib to current directory ---"
-          # 将 dylib 移动到根目录，方便 Makefile 查找
-          mv ./usr/lib/libsubstrate.dylib .
+          echo "--- Dependencies ready ---"
 
       # 3. 执行编译
       - name: Compile the dylib
