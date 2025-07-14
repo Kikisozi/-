@@ -11,5 +11,5 @@ all:
 	-framework UIKit \
 	-framework CoreGraphics \
 	-framework Metal \
-	ColorHook.m -o $(DYLIB_NAME)
+	ColorHook1.m -o $(DYLIB_NAME)
 	@echo "--- [Metal最终版] 编译完成 ---"
