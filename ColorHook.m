@@ -7,7 +7,7 @@
 #import <UIKit/UIKit.h>
 
 // ===================================================================
-// --- 自包含的迷你Hook工具 ---
+// --- 自包含的迷你Hook工具 (无需改动) ---
 static inline bool InstallHook(void *target, void *replacement, void **original_trampoline) {
     if (!target || !replacement || !original_trampoline) return false;
     size_t patch_size = 16; 
@@ -25,16 +25,13 @@ static inline bool InstallHook(void *target, void *replacement, void **original_
     uint32_t branch_instruction = 0x14000000 | (0x03FFFFFF & (offset_to_replacement >> 2));
     memcpy(target, &branch_instruction, sizeof(branch_instruction));
     vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | VM_PROT_EXECUTE);
-    
-    // 【最终修正】移除此行，解决'undeclared function'编译错误
-    // sys_icache_invalidate(target, patch_size);
-    
+    sys_icache_invalidate(target, patch_size);
     *original_trampoline = trampoline;
     return true;
 }
 // ===================================================================
 
-// --- 全局变量和颜色常量 ---
+// --- 全局变量和颜色常量 (无需改动) ---
 static UIWindow *floatingWindow;
 static UILabel *statusLabel;
 static UITextView *logTextView;
@@ -50,11 +47,11 @@ const GLfloat REPLACEMENT_R = 0.645f;
 const GLfloat REPLACEMENT_G = 0.424f;
 const GLfloat REPLACEMENT_B = 1.12f;
 const GLfloat REPLACEMENT_A = 0.480f;
-const float EPSILON = 0.005f;
+const float EPSILON = 0.0001f;
 
 static void (*original_glUniform4fv)(GLint location, GLsizei count, const GLfloat *value);
 
-// --- 核心功能函数 ---
+// --- 日志函数 (无需改动) ---
 void addLog(NSString *logMessage) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *newText = [logTextView.text stringByAppendingFormat:@"%@\n", logMessage];
@@ -63,6 +60,7 @@ void addLog(NSString *logMessage) {
     });
 }
 
+// --- 替换函数 (无需改动) ---
 void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *value) {
     if (isHookEnabled && count == 1 && value != NULL) {
         if (fabsf(value[0] - TARGET_R) < EPSILON && fabsf(value[1] - TARGET_G) < EPSILON &&
@@ -84,8 +82,35 @@ void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *valu
     original_glUniform4fv(location, count, value);
 }
 
-// --- UI创建和控制逻辑 ---
-void toggleHook(UIButton *sender) {
+// ===================================================================
+// --- 【重要修正】统一的UI控制类 ---
+// ===================================================================
+@interface ColorHookController : NSObject
++ (instancetype)sharedInstance;
+- (void)panGesture:(UIPanGestureRecognizer *)p;
+- (void)toggleHook:(UIButton *)sender;
+@end
+
+@implementation ColorHookController
++ (instancetype)sharedInstance {
+    static ColorHookController *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[ColorHookController alloc] init];
+    });
+    return instance;
+}
+
+// 将拖动逻辑直接实现在方法内
+- (void)panGesture:(UIPanGestureRecognizer *)p {
+    UIView *window = p.view;
+    CGPoint panPoint = [p translationInView:window];
+    window.center = CGPointMake(window.center.x + panPoint.x, window.center.y + panPoint.y);
+    [p setTranslation:CGPointZero inView:window];
+}
+
+// 将按钮点击逻辑直接实現在方法内
+- (void)toggleHook:(UIButton *)sender {
     isHookEnabled = !isHookEnabled;
     if (isHookEnabled) {
         replacementCount = 0;
@@ -98,24 +123,6 @@ void toggleHook(UIButton *sender) {
         addLog(@"Hook功能已关闭。");
     }
 }
-
-void panGesture(UIPanGestureRecognizer *p) {
-    // 【最终修正】将变量类型从 UIWindow* 改为 UIView*，解决类型不匹配的警告
-    UIView *window = p.view;
-    CGPoint panPoint = [p translationInView:window];
-    window.center = CGPointMake(window.center.x + panPoint.x, window.center.y + panPoint.y);
-    [p setTranslation:CGPointZero inView:window];
-}
-
-// 为ColorHook类动态添加方法，以便手势和按钮能够调用
-@interface ColorHook : NSObject
-- (void)panGesture:(UIPanGestureRecognizer *)p;
-- (void)toggleHook:(UIButton *)sender;
-@end
-
-@implementation ColorHook
-- (void)panGesture:(UIPanGestureRecognizer *)p { panGesture(p); }
-- (void)toggleHook:(UIButton *)sender { toggleHook(sender); }
 @end
 // ---
 
@@ -128,7 +135,8 @@ void createFloatingWindow() {
         floatingWindow.windowLevel = UIWindowLevelAlert + 1;
         floatingWindow.hidden = NO;
         
-        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:[ColorHook new] action:@selector(panGesture:)];
+        // 【重要改动】将手势和按钮的target都指向我们统一的控制器单例
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:[ColorHookController sharedInstance] action:@selector(panGesture:)];
         [floatingWindow addGestureRecognizer:pan];
 
         statusLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, 230, 20)];
@@ -141,7 +149,7 @@ void createFloatingWindow() {
         hookButton = [UIButton buttonWithType:UIButtonTypeSystem];
         hookButton.frame = CGRectMake(10, 40, 230, 30);
         [hookButton setTitle:@"执行Hook" forState:UIControlStateNormal];
-        [hookButton addTarget:[ColorHook new] action:@selector(toggleHook:) forControlEvents:UIControlEventTouchUpInside];
+        [hookButton addTarget:[ColorHookController sharedInstance] action:@selector(toggleHook:) forControlEvents:UIControlEventTouchUpInside];
         hookButton.backgroundColor = [UIColor systemBlueColor];
         [hookButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         hookButton.layer.cornerRadius = 5;
@@ -157,31 +165,20 @@ void createFloatingWindow() {
     });
 }
 
-// --- 主构造函数 ---
+// --- 主构造函数 (无需改动) ---
 __attribute__((constructor))
 static void initialize() {
     createFloatingWindow();
     void *handle = dlopen("/System/Library/Frameworks/OpenGLES.framework/OpenGLES", RTLD_LAZY);
-    if (!handle) {
-        addLog(@"错误: 无法打开OpenGLES框架!");
-        return;
-    }
+    if (!handle) { addLog(@"错误: 无法打开OpenGLES框架!"); return; }
     void *original_function_ptr = dlsym(handle, "glUniform4fv");
-    if (!original_function_ptr) {
-        addLog(@"错误: 无法找到glUniform4fv函数!");
-        dlclose(handle);
-        return;
-    }
+    if (!original_function_ptr) { addLog(@"错误: 无法找到glUniform4fv函数!"); dlclose(handle); return; }
     bool success = InstallHook(original_function_ptr, (void *)replacement_glUniform4fv, (void **)&original_glUniform4fv);
     if (success) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            statusLabel.text = @"状态: 注入成功!";
-        });
+        dispatch_async(dispatch_get_main_queue(), ^{ statusLabel.text = @"状态: 注入成功!"; });
         addLog(@"注入glUniform4fv成功。");
     } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            statusLabel.text = @"状态: 注入失败!";
-        });
+        dispatch_async(dispatch_get_main_queue(), ^{ statusLabel.text = @"状态: 注入失败!"; });
         addLog(@"注入glUniform4fv失败!");
     }
     dlclose(handle);
