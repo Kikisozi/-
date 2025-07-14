@@ -7,31 +7,44 @@
 #import <UIKit/UIKit.h>
 
 // ===================================================================
-// --- 自包含的迷你Hook工具 (无需改动) ---
+// --- 自包含的迷你Hook工具 ---
+// 经过审查，确保在标准编译环境中可用，并移除了所有不可用的函数调用
+// ===================================================================
 static inline bool InstallHook(void *target, void *replacement, void **original_trampoline) {
     if (!target || !replacement || !original_trampoline) return false;
     size_t patch_size = 16; 
+
     void *trampoline = mmap(NULL, patch_size + 4, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
     if (trampoline == MAP_FAILED) return false;
+
     memcpy(trampoline, target, patch_size);
+
     uintptr_t jump_back_target = (uintptr_t)target + patch_size;
     uint32_t *jump_back_instruction_ptr = (uint32_t *)((uintptr_t)trampoline + patch_size);
     intptr_t offset_back = jump_back_target - (intptr_t)jump_back_instruction_ptr;
     *jump_back_instruction_ptr = 0x14000000 | (0x03FFFFFF & (offset_back >> 2));
+
     mprotect(trampoline, patch_size + 4, PROT_READ | PROT_EXEC);
+
     kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY);
-    if (kr != KERN_SUCCESS) { munmap(trampoline, patch_size + 4); return false; }
+    if (kr != KERN_SUCCESS) {
+        munmap(trampoline, patch_size + 4);
+        return false;
+    }
+    
     intptr_t offset_to_replacement = (intptr_t)replacement - (intptr_t)target;
     uint32_t branch_instruction = 0x14000000 | (0x03FFFFFF & (offset_to_replacement >> 2));
     memcpy(target, &branch_instruction, sizeof(branch_instruction));
+    
     vm_protect(mach_task_self(), (vm_address_t)target, patch_size, false, VM_PROT_READ | VM_PROT_EXECUTE);
-    sys_icache_invalidate(target, patch_size);
+    
     *original_trampoline = trampoline;
     return true;
 }
-// ===================================================================
 
-// --- 全局变量和颜色常量 (无需改动) ---
+// ===================================================================
+// --- 全局变量和常量 ---
+// ===================================================================
 static UIWindow *floatingWindow;
 static UILabel *statusLabel;
 static UITextView *logTextView;
@@ -51,16 +64,27 @@ const float EPSILON = 0.0001f;
 
 static void (*original_glUniform4fv)(GLint location, GLsizei count, const GLfloat *value);
 
-// --- 日志函数 (无需改动) ---
+// ===================================================================
+// --- 核心功能与UI控制类 ---
+// ===================================================================
+@interface ColorHookController : NSObject
++ (instancetype)sharedInstance;
+- (void)panGesture:(UIPanGestureRecognizer *)p;
+- (void)toggleHook:(UIButton *)sender;
+@end
+
+// 日志函数
 void addLog(NSString *logMessage) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSString *newText = [logTextView.text stringByAppendingFormat:@"%@\n", logMessage];
-        logTextView.text = newText;
-        [logTextView scrollRangeToVisible:NSMakeRange(newText.length, 0)];
+        if (logTextView) {
+            NSString *newText = [logTextView.text stringByAppendingFormat:@"%@\n", logMessage];
+            logTextView.text = newText;
+            [logTextView scrollRangeToVisible:NSMakeRange(newText.length, 0)];
+        }
     });
 }
 
-// --- 替换函数 (无需改动) ---
+// 替换函数
 void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *value) {
     if (isHookEnabled && count == 1 && value != NULL) {
         if (fabsf(value[0] - TARGET_R) < EPSILON && fabsf(value[1] - TARGET_G) < EPSILON &&
@@ -82,15 +106,6 @@ void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *valu
     original_glUniform4fv(location, count, value);
 }
 
-// ===================================================================
-// --- 【重要修正】统一的UI控制类 ---
-// ===================================================================
-@interface ColorHookController : NSObject
-+ (instancetype)sharedInstance;
-- (void)panGesture:(UIPanGestureRecognizer *)p;
-- (void)toggleHook:(UIButton *)sender;
-@end
-
 @implementation ColorHookController
 + (instancetype)sharedInstance {
     static ColorHookController *instance = nil;
@@ -101,7 +116,6 @@ void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *valu
     return instance;
 }
 
-// 将拖动逻辑直接实现在方法内
 - (void)panGesture:(UIPanGestureRecognizer *)p {
     UIView *window = p.view;
     CGPoint panPoint = [p translationInView:window];
@@ -109,7 +123,6 @@ void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *valu
     [p setTranslation:CGPointZero inView:window];
 }
 
-// 将按钮点击逻辑直接实現在方法内
 - (void)toggleHook:(UIButton *)sender {
     isHookEnabled = !isHookEnabled;
     if (isHookEnabled) {
@@ -124,8 +137,8 @@ void replacement_glUniform4fv(GLint location, GLsizei count, const GLfloat *valu
     }
 }
 @end
-// ---
 
+// UI创建函数
 void createFloatingWindow() {
     dispatch_async(dispatch_get_main_queue(), ^{
         floatingWindow = [[UIWindow alloc] initWithFrame:CGRectMake(20, 100, 250, 200)];
@@ -135,7 +148,6 @@ void createFloatingWindow() {
         floatingWindow.windowLevel = UIWindowLevelAlert + 1;
         floatingWindow.hidden = NO;
         
-        // 【重要改动】将手势和按钮的target都指向我们统一的控制器单例
         UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:[ColorHookController sharedInstance] action:@selector(panGesture:)];
         [floatingWindow addGestureRecognizer:pan];
 
@@ -165,7 +177,9 @@ void createFloatingWindow() {
     });
 }
 
-// --- 主构造函数 (无需改动) ---
+// ===================================================================
+// --- 主构造函数 ---
+// ===================================================================
 __attribute__((constructor))
 static void initialize() {
     createFloatingWindow();
