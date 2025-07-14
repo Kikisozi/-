@@ -1,20 +1,18 @@
 # 工作流名称
 name: Build Dylib on Push
 
-# 触发条件：当有代码推送到主分支时触发
+# 触发条件
 on:
   push:
-    branches: [ "main", "master" ] # 适配主分支的不同名称
-  workflow_dispatch: # 允许手动触发
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
-  # 任务名称
   build:
-    # 运行环境：使用最新的macOS系统
     runs-on: macos-latest
 
     steps:
-      # 第一步：检出（下载）你的仓库代码到虚拟机
+      # 第一步：检出代码
       - name: Checkout repository code
         uses: actions/checkout@v4
 
@@ -22,11 +20,13 @@ jobs:
       - name: Compile the dylib using Makefile
         run: make
 
-      # 第三步：上传编译产物
+      # 第三步：【新增的调试步骤】列出当前目录的文件
+      - name: List files in the directory
+        run: ls -la
+
+      # 第四步：上传编译产物
       - name: Upload compiled dylib as artifact
         uses: actions/upload-artifact@v4
         with:
-          # 上传文件的名称
           name: ColorHook-Dylib
-          # 要上传的文件路径
           path: ColorHook.dylib
