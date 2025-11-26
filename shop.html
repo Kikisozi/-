@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHOP CONFIG EDITOR - PHANTOM THIEVES EDITION</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Noto+Sans+SC:wght@500;700;900&family=Space+Mono:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --c-bg: #f0f0f0;
+            --c-panel: #ffffff;
+            --c-border: #000000;
+            --c-accent-yellow: #facc15;
+            --c-accent-cyan: #22d3ee;
+            --c-accent-red: #ef4444;
+            --c-shadow: 6px 6px 0px #000000;
+        }
+
+        body {
+            background-color: var(--c-bg);
+            background-image: 
+                linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc),
+                linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            font-family: 'Noto Sans SC', sans-serif;
+            color: #000;
+            min-height: 100vh;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        /* === 漫画/P5 风格组件 === */
+
+        .comic-font { font-family: 'Bangers', 'Noto Sans SC', cursive; letter-spacing: 1px; }
+        .mono-font { font-family: 'Space Mono', monospace; }
+        .p5-font { 
+            font-family: 'Noto Sans SC', sans-serif; 
+            font-weight: 900; 
+            font-style: italic;
+            transform: skewX(-10deg);
+            display: inline-block;
+        }
+
+        /* 漫画分镜面板 */
+        .comic-panel {
+            background: var(--c-panel);
+            border: 4px solid var(--c-border);
+            box-shadow: var(--c-shadow);
+            position: relative;
+            transition: transform 0.1s;
+            overflow: hidden;
+        }
+        
+        .comic-panel-header {
+            background: #000;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            border-bottom: 4px solid var(--c-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            clip-path: polygon(0 0, 100% 0, 98% 100%, 2% 100%);
+        }
+
+        /* 输入框 */
+        .comic-input, .comic-select, .comic-textarea {
+            background: #fff;
+            border: 3px solid var(--c-border);
+            padding: 0.75rem;
+            font-weight: 700;
+            width: 100%;
+            transition: all 0.2s;
+            font-size: 1rem;
+            font-family: 'Space Mono', 'Noto Sans SC', monospace;
+        }
+        .comic-input:focus, .comic-select:focus, .comic-textarea:focus {
+            outline: none;
+            background: #000;
+            color: #fff;
+            transform: scale(1.02) skewX(-2deg);
+            box-shadow: 4px 4px 0px var(--c-accent-yellow);
+            border-color: var(--c-accent-yellow);
+        }
+        .batch-active {
+            background-color: var(--c-accent-cyan) !important;
+            color: #000 !important;
+        }
+
+        /* 按钮 */
+        .comic-btn {
+            border: 3px solid var(--c-border);
+            font-weight: 900;
+            text-transform: uppercase;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.1s;
+            box-shadow: 4px 4px 0px #000;
+            clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%);
+        }
+        .comic-btn:hover:not(:disabled) {
+            transform: translate(-2px, -2px) skewX(-5deg);
+            box-shadow: 6px 6px 0px var(--c-accent-yellow);
+            z-index: 10;
+        }
+        .comic-btn:active:not(:disabled) {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px #000;
+        }
+        .comic-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #e5e7eb;
+            box-shadow: none;
+        }
+
+        .btn-primary { background: #000; color: var(--c-accent-cyan); }
+        .btn-success { background: var(--c-accent-yellow); color: #000; }
+        .btn-danger { background: var(--c-accent-red); color: white; }
+        .btn-dark { background: #1f2937; color: white; }
+
+        /* 标签页 */
+        .comic-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: -4px;
+            position: relative;
+            z-index: 10;
+            padding-left: 1rem;
+        }
+        .comic-tab-btn {
+            background: #fff;
+            border: 3px solid #000;
+            border-bottom: none;
+            padding: 0.5rem 1.5rem;
+            font-weight: 900;
+            cursor: pointer;
+            transform: translateY(4px) skewX(-10deg);
+            transition: transform 0.2s;
+        }
+        .comic-tab-btn.active {
+            background: #000;
+            color: var(--c-accent-yellow);
+            transform: translateY(0) skewX(-10deg) scale(1.1);
+            z-index: 20;
+        }
+
+        /* 搜索结果列表 */
+        .search-results {
+            position: absolute;
+            width: 100%;
+            background: #fff;
+            border: 4px solid #000;
+            z-index: 50;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 8px 8px 0px rgba(0,0,0,1);
+            display: none;
+            font-family: 'Space Mono', 'Noto Sans SC', monospace;
+        }
+        .search-item {
+            padding: 10px;
+            border-bottom: 2px solid #000;
+            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .search-item:hover {
+            background: #000;
+            color: var(--c-accent-cyan);
+            padding-left: 20px;
+        }
+        .search-item .badge {
+            background: var(--c-accent-yellow);
+            color: #000;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            transform: rotate(-2deg);
+            border: 2px solid #000;
+        }
+
+        /* 日志样式 - P5 风格 */
+        #app-log {
+            font-family: 'Space Mono', 'Noto Sans SC', monospace;
+            background-image: repeating-linear-gradient(0deg, #111, #111 2px, #000 2px, #000 4px);
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border: 2px solid transparent;
+            position: relative;
+            transform: skewX(-5deg);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+        .log-entry:hover {
+            border-color: rgba(255,255,255,0.2);
+            transform: skewX(-5deg) translateX(5px);
+        }
+        
+        /* 选中操作 */
+        .log-select {
+            background: rgba(34, 211, 238, 0.1);
+            border-left: 4px solid var(--c-accent-cyan);
+            color: var(--c-accent-cyan);
+        }
+        .log-select .tag { background: var(--c-accent-cyan); color: #000; padding: 2px 4px; font-weight: bold; }
+        
+        /* 执行操作 */
+        .log-action {
+            background: rgba(250, 204, 21, 0.1);
+            border-left: 4px solid var(--c-accent-yellow);
+            color: var(--c-accent-yellow);
+        }
+        .log-action .tag { background: var(--c-accent-yellow); color: #000; padding: 2px 4px; font-weight: bold; }
+
+        /* 错误/系统 */
+        .log-error {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 4px solid var(--c-accent-red);
+            color: var(--c-accent-red);
+        }
+        .log-sys { color: #888; border-left: 4px solid #444; }
+
+        .log-detail { font-size: 0.75rem; opacity: 0.8; font-style: italic; display: block; margin-top: 4px;}
+
+        /* Checkbox Grid */
+        .equiptype-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 3px solid #000;
+            padding: 10px;
+            background: #fff;
+        }
+        .et-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 4px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .et-item:hover {
+            background: #000;
+            color: #fff;
+            transform: skewX(-5deg);
+        }
+        .et-item input:checked + span {
+            color: var(--c-accent-red);
+            text-decoration: line-through;
+        }
+
+        /* 任务历史记录样式 */
+        .task-card {
+            background: #fff;
+            border: 2px solid #000;
+            padding: 8px;
+            margin-bottom: 8px;
+            font-family: 'Space Mono', 'Noto Sans SC', monospace;
+            font-size: 0.8rem;
+            box-shadow: 4px 4px 0 #ddd;
+            transform: skewX(-2deg);
+        }
+        .task-card .row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+        .task-card .label {
+            font-weight: bold;
+            color: #666;
+            min-width: 40px;
+            text-align: right;
+        }
+        .task-card .val {
+            font-weight: bold;
+            color: #000;
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 12px; background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--c-accent-yellow); border: 2px solid #000; }
+        ::-webkit-scrollbar-track { background: #222; }
+    </style>
+</head>
+<body>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-12 gap-6 p-4">
+        
+        <!-- 标题区域 -->
+        <div class="col-span-12 text-center mb-2 relative">
+            <h1 class="p5-font text-6xl md:text-8xl text-black drop-shadow-[4px_4px_0_#fff]" style="-webkit-text-stroke: 2px white; color: black; transform: skewX(-10deg) rotate(-2deg);">SHOP EDITOR</h1>
+            <div class="absolute top-0 right-10 bg-black text-yellow-400 px-4 py-2 font-bold transform rotate-3 border-4 border-white shadow-lg text-xl p5-font">PHANTOM THIEVES VER.</div>
+        </div>
+
+        <!-- 文件控制面板 -->
+        <div class="col-span-12 comic-panel bg-white p-6 flex flex-col md:flex-row gap-6 items-center border-black">
+            <div class="flex-1 w-full relative group">
+                <div class="absolute -top-4 left-4 bg-yellow-400 text-black px-2 font-bold text-sm border-2 border-black transform -rotate-2">STEP 1: TAKE YOUR HEART</div>
+                <input type="file" id="file-upload" accept=".bytes" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                <div class="border-4 border-black border-dashed h-20 flex items-center justify-center bg-gray-100 group-hover:bg-black group-hover:text-white transition-all transform group-hover:-skew-x-3">
+                    <span id="file-status" class="comic-font text-2xl flex items-center gap-2">
+                        📂 点击加载 .BYTES 文件
+                    </span>
+                </div>
+            </div>
+            <button id="export-button" onclick="executeExport()" class="comic-btn btn-success px-8 h-20 text-2xl flex items-center gap-2 w-full md:w-auto" disabled>
+                <span>💾 保存并导出</span>
+            </button>
+        </div>
+
+        <!-- 左侧主功能区 -->
+        <div class="col-span-12 lg:col-span-8">
+            
+            <!-- Tabs -->
+            <div class="comic-tabs">
+                <button class="comic-tab-btn active" onclick="switchTab('beauty', event)">美化 / 保留 (B)</button>
+                <button class="comic-tab-btn" onclick="switchTab('w-mod', event)">属性修改 (W)</button>
+                <button class="comic-tab-btn" onclick="switchTab('blacklist', event)">黑/白名单 (Q)</button>
+                <button class="comic-tab-btn" onclick="switchTab('task-list', event)">任务列表</button>
+            </div>
+
+            <div class="comic-panel bg-white p-0 min-h-[550px] border-t-0">
+                
+                <!-- 1. 美化/保留 (B) -->
+                <div id="beauty-content" class="tab-content p-8">
+                    <div class="comic-panel-header mb-8 bg-black text-cyan-400">
+                        <span class="p5-font text-2xl not-italic">外观美化</span>
+                        <span class="text-white text-xs font-mono">指针交换 & 保留模式</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                        <!-- Target -->
+                        <div class="relative">
+                            <div class="label-tag bg-black text-cyan-400 px-2 py-1 font-bold inline-block mb-2 border-2 border-black transform -skew-x-6 shadow-[2px_2px_0_#ccc]">目标 (被改)</div>
+                            <div class="relative">
+                                <input type="text" id="target-search" class="comic-input text-xl" placeholder="搜索 ID / 名称 / 备注..." autocomplete="off" oninput="handleSearch('target')">
+                                <!-- 全选按钮 -->
+                                <button id="select-all-btn" onclick="selectAllTargets()" class="absolute right-2 top-2 bottom-2 px-4 bg-black text-yellow-400 font-bold border-2 border-cyan-400 hover:bg-gray-800 hidden z-10 text-sm">
+                                    全选列表
+                                </button>
+                            </div>
+                            <div id="target-results" class="search-results"></div>
+                            <input type="hidden" id="target-id"> 
+                        </div>
+
+                        <!-- Source -->
+                        <div class="relative">
+                            <div class="label-tag bg-white text-black px-2 py-1 font-bold inline-block mb-2 border-2 border-black transform -skew-x-6 shadow-[2px_2px_0_#000]">素材 (源)</div>
+                            <input type="text" id="source-search" class="comic-input text-xl" placeholder="留空 = 保留模式" autocomplete="off" oninput="handleSearch('source')">
+                            <div id="source-results" class="search-results"></div>
+                            <input type="hidden" id="source-id"> 
+                        </div>
+                    </div>
+
+                    <div class="mb-8 relative">
+                         <div class="label-tag bg-gray-200 text-black px-2 py-1 font-bold inline-block mb-2 border-2 border-black transform -skew-x-6">重命名 (可选)</div>
+                        <input type="text" id="rename-input" class="comic-input" placeholder="输入新名称以覆盖...">
+                    </div>
+
+                    <button onclick="executeBeauty()" class="comic-btn btn-primary w-full py-4 text-3xl text-cyan-400 shadow-[8px_8px_0_#000] hover:text-white">
+                        执行操作 !
+                    </button>
+                    
+                    <p class="mt-4 text-xs font-mono text-gray-500 text-center">
+                        * 若目标选中多个且源为空，将批量执行“保留”。保留的项目不会被黑名单清理。
+                    </p>
+                </div>
+
+                <!-- 2. 属性修改 (W) -->
+                <div id="w-mod-content" class="tab-content p-8 hidden">
+                    <div class="comic-panel-header mb-8 bg-purple-700 text-yellow-400">
+                        <span class="p5-font text-2xl not-italic">属性修改</span>
+                        <span class="text-white text-xs font-mono">数值编辑模式</span>
+                    </div>
+
+                    <div class="mb-6 relative">
+                        <div class="label-tag bg-purple-200 text-black px-2 py-1 font-bold inline-block mb-2 border-2 border-black transform -skew-x-6">选择物品</div>
+                        <input type="text" id="w-search" class="comic-input text-xl" placeholder="搜索 ID / 名称 / 备注..." autocomplete="off" oninput="handleSearch('w')">
+                        <div id="w-results" class="search-results"></div>
+                        <input type="hidden" id="w-id">
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4 mb-8">
+                        <div class="col-span-3">
+                            <button onclick="viewAttributes()" class="comic-btn bg-black text-white w-full h-full text-sm border-black hover:bg-gray-800">查看属性</button>
+                        </div>
+                        <div class="col-span-5">
+                            <select id="w-fid-select" class="comic-select cursor-pointer">
+                                <option value="" disabled selected>选择属性...</option>
+                            </select>
+                        </div>
+                        <div class="col-span-4">
+                            <input type="text" id="w-value-input" class="comic-input text-center bg-yellow-50" placeholder="值">
+                        </div>
+                    </div>
+
+                    <button onclick="executeWMod()" class="comic-btn btn-success w-full py-4 text-2xl text-black shadow-[8px_8px_0_#000]">
+                        应用修改
+                    </button>
+                </div>
+
+                <!-- 3. 黑名单 (Q) -->
+                <div id="blacklist-content" class="tab-content p-8 hidden">
+                    <div class="comic-panel-header mb-8 bg-red-600 text-white">
+                        <span class="p5-font text-2xl not-italic">筛选系统</span>
+                        <span class="text-white text-xs font-mono">黑名单 / 白名单</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Mode Switch -->
+                        <div class="flex gap-4 mb-4">
+                            <label class="flex-1 cursor-pointer group">
+                                <input type="radio" name="bl-mode" value="off" checked class="hidden peer" onchange="updateBlacklistUI()">
+                                <div class="comic-btn bg-gray-100 text-gray-400 py-3 text-center peer-checked:bg-black peer-checked:text-white transform peer-checked:-skew-x-3">
+                                    关闭 (OFF)
+                                </div>
+                            </label>
+                            <label class="flex-1 cursor-pointer group">
+                                <input type="radio" name="bl-mode" value="block" class="hidden peer" onchange="updateBlacklistUI()">
+                                <div class="comic-btn bg-gray-100 text-gray-400 py-3 text-center peer-checked:bg-red-600 peer-checked:text-white transform peer-checked:-skew-x-3">
+                                    黑名单 (剔除)
+                                </div>
+                            </label>
+                            <label class="flex-1 cursor-pointer group">
+                                <input type="radio" name="bl-mode" value="allow" class="hidden peer" onchange="updateBlacklistUI()">
+                                <div class="comic-btn bg-gray-100 text-gray-400 py-3 text-center peer-checked:bg-green-500 peer-checked:text-black transform peer-checked:-skew-x-3">
+                                    白名单 (保留)
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Selector Area -->
+                        <div id="bl-selector-area" class="opacity-50 pointer-events-none transition-opacity">
+                            <div class="flex justify-between items-center mb-2 px-2">
+                                <div class="font-bold text-sm">物品类型 (EquipType - FID 2)</div>
+                                <div class="space-x-2 text-xs font-mono">
+                                    <button onclick="toggleAllEquipTypes(true)" class="text-blue-600 hover:underline">全选</button>
+                                    <button onclick="toggleAllEquipTypes(false)" class="text-red-600 hover:underline">清空</button>
+                                </div>
+                            </div>
+                            
+                            <div id="equiptype-list" class="equiptype-grid">
+                                <div class="p-4 text-center text-gray-400 col-span-full">等待加载文件...</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-black text-white p-3 text-xs font-mono mt-4 transform -skew-x-2 border-l-4 border-yellow-400">
+                             > 提示: "美化"或"保留"的物品具有最高优先级，会自动豁免于黑名单清理。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 任务列表 -->
+                <div id="task-list-content" class="tab-content p-8 hidden">
+                    <div class="comic-panel-header mb-6 bg-gray-800 text-white">
+                        <span class="p5-font text-2xl not-italic">任务列表</span>
+                        <span class="bg-white text-black px-2 py-0.5 text-xs font-bold rounded" id="task-count">0</span>
+                    </div>
+                    
+                    <div id="task-log" class="space-y-2 max-h-[350px] overflow-y-auto pr-2 border-4 border-black bg-gray-100 p-4">
+                        <div class="text-center text-gray-400 py-12 font-bold text-xl transform rotate-2">暂无记录</div>
+                    </div>
+                    
+                    <button onclick="restoreAll()" class="comic-btn bg-black text-red-500 w-full py-4 mt-6 border-red-500 hover:bg-gray-900 text-xl shadow-[6px_6px_0_#ef4444]">
+                        ↺ 清空所有操作
+                    </button>
+                    <p class="text-center text-xs text-gray-500 mt-2">点击将完全撤销所有更改并还原文件</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 右侧信息栏 -->
+        <div class="col-span-12 lg:col-span-4 space-y-6">
+            <!-- 终端 -->
+            <div class="comic-panel p-0 bg-black border-white flex flex-col h-[300px]">
+                <div class="comic-panel-header bg-gray-900 text-green-400 border-white">
+                    <span class="font-mono">控制台_</span>
+                </div>
+                <!-- 终端输出显示区 -->
+                <div id="terminal-output" class="flex-1 bg-black text-green-500 font-mono p-2 overflow-y-auto text-xs whitespace-pre-wrap border-b border-gray-800">
+                    <span class="opacity-50"># 系统就绪。</span>
+                </div>
+                <!-- 终端输入区 -->
+                <div class="p-2 bg-black flex flex-col gap-2">
+                    <div class="flex gap-2">
+                        <textarea id="terminal-input" rows="1" class="w-full bg-gray-900 text-green-500 font-mono p-2 focus:outline-none text-xs border border-gray-700 resize-none" placeholder="> 输入命令... (b 1001 2001)"></textarea>
+                        <button onclick="executeTerminalCommand()" class="bg-green-800 text-white font-bold px-4 border border-green-600 hover:bg-green-700 text-xs">运行</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日志 -->
+            <div class="comic-panel p-0 flex flex-col h-[500px] border-black">
+                <div class="comic-panel-header bg-yellow-400 text-black border-black">
+                    <span class="p5-font text-xl">系统日志</span>
+                </div>
+                <div id="app-log" class="flex-1 overflow-y-auto p-4 bg-gray-900 text-white border-t-4 border-black">
+                    <div class="log-entry log-sys">
+                        <span class="tag">SYS</span>
+                        <span>等待输入...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const INPUT_FILENAME = "shopconfig.bytes";
+        const OUTPUT_FILENAME = "shopconfig_modified.bytes";
+        const BLACKLIST_ID = 123;
+        
+        // 字段映射表 (与原版保持一致)
+        const FIELDS_FINAL_VERIFIED = [
+            [0, "Id", "uint"], [1, "Commentary", "string"], [2, "EquipType", "uint"],
+            [3, "Name", "string"], [4, "Icon", "string"], [5, "Money", "string"],
+            [6, "MoneyType", "uint"], [7, "RMoney", "int"], [8, "RMoneyType", "uint"],
+            [9, "DirectTo", "string"], [10, "UseTime", "string"], [11, "bpsub2exp", "int"],
+            [12, "PurchaseTimes", "int"], [13, "PurchaseNum", "int"], [14, "Lucky", "uint"],
+            [15, "Tips", "string"], [16, "HowtoGet", "string"], [17, "HowtoGetDes", "string"],
+            [18, "ParamforAds", "string"], [19, "Rarity", "int"], [20, "HowtoGetOP", "string"],
+            [21, "HowToGetDirectTo", "string"], [22, "Bundle", "string"], [23, "Quality", "int"],
+            [24, "Show", "int"], [25, "ShowTime", "string"], [26, "StartTime", "string"],
+            [27, "EndTime", "string"], [28, "SkinType", "int"], [29, "SkinTypeEndTime", "string"],
+            [30, "Hide", "int"], [31, "Shield", "int"], [32, "HaveParticle", "int"],
+            [33, "ShieldType", "int"], [34, "Limit", "int"], [35, "IsVisiableinShop", "int"],
+            [36, "OperateCD", "int"], [37, "AutoCD", "int"], [38, "ShopLevel", "int"],
+            [39, "HaveArrow", "int"], [40, "StaticIcon", "int"], [41, "ArrowState", "int"],
+            [42, "equipnamepos", "int"], [43, "bpexp", "int"], [44, "bpsub2exp", "int"],
+            [45, "RevActId", "string"], [46, "keyskintype", "int"], [47, "ComposeItem", "string"],
+            [48, "noSell", "int"], [49, "HideInSmithy", "int"], [50, "Operate", "int"],
+            [51, "DisPrice", "int"], [52, "DisTime", "string"], [53, "FeaturePos", "int"],
+            [54, "DifIcon", "string"], [55, "KeyTime", "string"], [56, "Qualifier", "int"],
+            [57, "Unknown_57", "string"], [58, "Unknown_58", "string"], [59, "CanPresentAndroid", "int"],
+            [60, "NewSkinTypeEndTime", "string"], [61, "VipLevel", "int"], [62, "Unknown_62", "string"],
+            [63, "NewSkinType", "int"], [64, "Unknown_64", "string"], [65, "productid", "string"],
+            [66, "LinkPackage", "string"], [67, "PchsRstcType", "int"], [68, "ActiveConditions", "string"],
+            [69, "BlackIcon", "string"], [70, "ShopLockVisiable", "int"], [71, "disproductid", "string"],
+            [72, "Unknown_72", "string"], [73, "CapsuleLevel", "int"], [74, "Unknown_74", "string"],
+            [75, "recommend", "int"], [76, "Unknown_76", "string"], [77, "HaveTransparent", "int"],
+            [78, "IsRare", "int"], [79, "LevelGroup", "int"], [80, "ActivityDes", "string"],
+            [81, "Unknown_81", "string"], [82, "Unknown_82", "string"], [83, "Unknown_83", "string"],
+            [84, "Unknown_84", "string"], [85, "Unknown_85", "string"], [86, "Unknown_86", "string"],
+            [87, "relatedid", "int"], [88, "Animation", "string"], [89, "Unknown_89", "string"],
+            [90, "Specialeffects", "string"], [91, "Unknown_91", "string"], [92, "bitmap", "string"],
+            [93, "Unknown_93", "string"], [94, "EatEffect", "string"], [95, "Unknown_95", "string"],
+            [96, "IconI", "string"], [97, "sounds", "string"], [98, "SourceItem", "int"],
+            [99, "DecomposeItem", "string"],
+            [100, "AnimationState", "uint"], [101, "IsShadowWithCircle", "uint"], 
+            [102, "EatEffect", "string"], [103, "MagicShopBack", "uint"], [104, "Sounds", "uint"], 
+            [105, "DecomposeItem", "string"], [106, "CanTransform", "uint"], [107, "SubType", "uint"], 
+            [108, "MNum", "uint"], [109, "MCondition", "uint"], [110, "TargetId", "uint"], 
+            [111, "TargetType", "string"], [112, "Chain", "string"], [113, "ZoomScale3d", "uint"], 
+            [114, "GiftScreen", "uint"], [115, "Texing", "uint"], [116, "TexingEndTime", "string"], 
+            [117, "RelatedId", "uint"], [118, "DifIcon", "string"], [119, "ActivityDes", "string"], 
+            [120, "Url", "string"], [121, "UseTimesByDay", "uint"], [122, "UseType", "uint"], 
+            [123, "BpExp", "uint"], [124, "HideAftSold", "uint"], [125, "TimeRed", "uint"], 
+            [126, "Recommend", "string"], [127, "VipLevel", "uint"], [128, "FirstFree", "uint"], 
+            [129, "VipPrice2", "uint"], [130, "ActiveConditions", "string"], [131, "Image", "string"], 
+            [132, "SuitReward", "string"], [133, "ProductId", "string"], [134, "BpSub1Exp", "uint"], 
+            [135, "BpSub2Exp", "string"], [136, "BpSub3Exp", "uint"], [137, "GiftToUseBtn", "uint"], 
+            [138, "GiftToUseEndTime", "string"], [139, "GiftLinkId", "uint"], [140, "SkinTypeStartTime", "string"], 
+            [141, "Money2", "uint"], [142, "MoneyType2", "uint"], [143, "ExObjId", "uint"], 
+            [144, "ExObjNum", "uint"], [145, "Group", "uint"], [146, "LevelGroup", "uint"], 
+            [147, "StaticIcon", "uint"], [148, "ArrowState", "string"], [149, "LinkId", "int"], 
+            [150, "IsVisibleJueBan", "int"], [151, "Grade", "string"], [152, "Premise", "string"], 
+            [153, "ZoomScale", "uint"], [154, "LimitNum_Old", "int"], [155, "HeroId", "int"], 
+            [156, "IsNullGuangHuan", "bool"], 
+            [157, "OpenIcon", "string"]
+        ];
+
+        const FIELD_TYPE_MAP = new Map(FIELDS_FINAL_VERIFIED.map(f => [f[0], f[2]]));
+        const FIELD_NAME_MAP = new Map(FIELDS_FINAL_VERIFIED.map(f => [f[0], f[1]]));
+
+        let editor = null;
+        let modTasks = []; // 存储 {type, cmd, descObj}
+        let keepIndices = new Set(); 
+        let itemSearchIndex = [];
+        let currentSearchResults = [];
+        let typeCounts = {}; 
+
+        class ShopEditor {
+            constructor(buffer) {
+                // 保存原始Buffer用于Undo
+                this.originalBuffer = buffer.slice(0);
+                this.buffer = buffer;
+                this.dataView = new DataView(this.buffer);
+                this.init();
+            }
+
+            init() {
+                this.items_cache = [];
+                this.items_start = 0;
+                this.items_count = 0;
+                this.current_item_index = -1;
+                
+                try {
+                    this.parseStructure();
+                    this.initSearchIndex();
+                    this.analyzeEquipTypes();
+                    logAction('sys', null, `文件加载成功: ${this.buffer.byteLength} 字节. 物品数: ${this.items_count}`);
+                } catch(e) {
+                    logAction('error', null, `解析失败: ${e.message}`);
+                }
+            }
+
+            restore() {
+                this.buffer = this.originalBuffer.slice(0);
+                this.dataView = new DataView(this.buffer);
+                this.init();
+                logAction('sys', null, "系统已还原至初始状态。");
+            }
+            
+            readUint32(o){if(o+4>this.buffer.byteLength)return 0;return this.dataView.getUint32(o,true);}
+            readInt32(o){if(o+4>this.buffer.byteLength)return 0;return this.dataView.getInt32(o,true);}
+            readBool(o){if(o+1>this.buffer.byteLength)return false;return this.dataView.getUint8(o)!==0;}
+            readFloat(o){if(o+4>this.buffer.byteLength)return 0;return this.dataView.getFloat32(o,true);}
+            readString(o){
+                try{
+                    const s=o+this.readUint32(o);
+                    const l=this.readUint32(s);
+                    if(l>10000) return "";
+                    const b=new Uint8Array(this.buffer,s+4,l);
+                    return new TextDecoder().decode(b).replace(/[^\x20-\x7E\u4e00-\u9fa5]/g,'');
+                }catch{return"";}
+            }
+            getFieldOffset(tl,fid){try{const so=this.readInt32(tl);const vt=tl-so;const vtl=this.dataView.getUint16(vt,true);const eo=4+fid*2;if(eo>=vtl)return 0;return this.dataView.getUint16(vt+eo,true);}catch{return 0;}}
+
+            parseStructure() {
+                const root = this.readUint32(0);
+                const bePo = this.getFieldOffset(root, 5); 
+                if(!bePo) throw new Error("Header parsing failed (FID 5)");
+                
+                const beLoc = root + bePo + this.readUint32(root + bePo);
+                const itemsPo = this.getFieldOffset(beLoc, 1);
+                if(!itemsPo) throw new Error("Item vector not found (FID 1)");
+                
+                this.items_vector_loc = beLoc + itemsPo;
+                const vecStart = this.items_vector_loc + this.readUint32(this.items_vector_loc);
+                this.items_count = this.readUint32(vecStart);
+                const start = vecStart + 4;
+                this.items_start = start;
+
+                for(let i=0; i<this.items_count; i++) {
+                    const ptr = start + i*4;
+                    const tbl = ptr + this.readUint32(ptr);
+                    let id=0,name="",comm="",et=0;
+                    
+                    const p0=this.getFieldOffset(tbl,0); if(p0) id=this.readUint32(tbl+p0);
+                    const p1=this.getFieldOffset(tbl,1); if(p1) comm=this.readString(tbl+p1);
+                    const p2=this.getFieldOffset(tbl,2); if(p2) et=this.readUint32(tbl+p2);
+                    const p3=this.getFieldOffset(tbl,3); if(p3) name=this.readString(tbl+p3);
+                    
+                    this.items_cache.push({
+                        index: i, ptr_loc: ptr, table_loc: tbl,
+                        id, name, comm, equipType: et,
+                        orig_id: id, orig_name: name, orig_comm: comm, orig_equipType: et,
+                        modified: false
+                    });
+                }
+            }
+            
+            initSearchIndex() {
+                itemSearchIndex = this.items_cache.map(item => ({
+                    searchStr: `${item.id} ${item.name.toLowerCase()} ${item.comm.toLowerCase()} ${item.equipType}`,
+                    data: item
+                }));
+            }
+            
+            analyzeEquipTypes() {
+                typeCounts = {};
+                this.items_cache.forEach(item => {
+                    const et = item.equipType || 0; 
+                    typeCounts[et] = (typeCounts[et] || 0) + 1;
+                });
+                renderEquipTypeSelector(); 
+            }
+
+            get_item_data(loc) {
+                const d = {};
+                for(const [fid,n,t] of FIELDS_FINAL_VERIFIED) {
+                    const po = this.getFieldOffset(loc, fid);
+                    if(po!==0) {
+                        const vl = loc+po;
+                        if(t==='string') d[fid]=this.readString(vl);
+                        else if(t==='bool') d[fid]=this.readBool(vl);
+                        else if(t==='float') d[fid]=this.readFloat(vl);
+                        else if(t==='int') d[fid]=this.readInt32(vl);
+                        else d[fid]=this.readUint32(vl);
+                    }
+                }
+                return d;
+            }
+
+            appendBytes(b){
+                const c=this.buffer.byteLength;
+                const n=new Uint8Array(c+b.length);
+                n.set(new Uint8Array(this.buffer));
+                n.set(b,c);
+                this.buffer=n.buffer;
+                this.dataView=new DataView(this.buffer);
+            }
+            
+            appendString(s){
+                const e=new TextEncoder();
+                const b=e.encode(s);
+                let l=this.buffer.byteLength;
+                const pad=(4-(l%4))%4;
+                if(pad>0) this.appendBytes(new Uint8Array(pad));
+                
+                l=this.buffer.byteLength;
+                const strStart=l;
+                
+                const h=new Uint8Array(4);
+                new DataView(h.buffer).setUint32(0,b.length,true);
+                this.appendBytes(h);
+                this.appendBytes(b);
+                this.appendBytes(new Uint8Array([0]));
+                return strStart;
+            }
+            
+            updateStringInPlace(loc,fid,s){
+                const po=this.getFieldOffset(loc,fid);
+                if(po===0) return false;
+                const vl=loc+po;
+                const sl=this.appendString(s);
+                const uoffset = sl - vl;
+                this.dataView.setUint32(vl, uoffset, true);
+                return true;
+            }
+            
+            writeFieldInPlace(loc,fid,v,t){
+                const po=this.getFieldOffset(loc,fid);
+                if(po===0) return false;
+                const vl=loc+po;
+                
+                if(t==='bool') {
+                    const bVal = (v === true || v === '1' || String(v).toLowerCase() === 'true') ? 1 : 0;
+                    this.dataView.setUint8(vl, bVal);
+                }
+                else if(t==='float') this.dataView.setFloat32(vl,parseFloat(v),true);
+                else if(t==='int') this.dataView.setInt32(vl,parseInt(v),true);
+                else this.dataView.setUint32(vl,parseInt(v),true);
+                return true;
+            }
+            
+            findPointersToTable(tl){
+                const p=[];
+                const e=this.items_start+this.items_count*4;
+                for(let a=this.items_start;a<e;a+=4) {
+                    if(a+this.readUint32(a)===tl) p.push(a);
+                }
+                return p;
+            }
+            
+            createNewTable(dataDict) {
+                const sortedFids = Object.keys(dataDict).map(Number).sort((a,b)=>a-b);
+                const maxFid = sortedFids.length > 0 ? Math.max(...sortedFids) : 0;
+                
+                let objBody = [];
+                let objBodyOffsets = {};
+                let currentBodyOff = 0;
+                
+                const getTypeSize = (fid, val) => {
+                    const t = FIELD_TYPE_MAP.get(fid) || 'uint';
+                    if(t==='string') return 4;
+                    if(t==='bool') return 1;
+                    return 4;
+                };
+
+                const fidsByAlign = [...sortedFids].sort((a,b) => {
+                    return getTypeSize(b, dataDict[b]) - getTypeSize(a, dataDict[a]);
+                });
+                
+                let stringPlaceholders = [];
+
+                for(let fid of fidsByAlign) {
+                    const val = dataDict[fid];
+                    const t = FIELD_TYPE_MAP.get(fid) || 'uint';
+                    const size = getTypeSize(fid, val);
+                    
+                    const pad = (size - (currentBodyOff % size)) % size;
+                    if(pad > 0) {
+                         for(let k=0; k<pad; k++) objBody.push(0);
+                         currentBodyOff += pad;
+                    }
+                    
+                    objBodyOffsets[fid] = 4 + currentBodyOff; 
+                    
+                    if(t === 'string') {
+                        stringPlaceholders.push({fid, relOff: objBody.length, val});
+                        objBody.push(0,0,0,0);
+                    } else if (t === 'bool') {
+                         const bVal = (val === true || val === '1' || String(val).toLowerCase() === 'true') ? 1 : 0;
+                         objBody.push(bVal);
+                    } else if (t === 'float') {
+                        const buffer = new ArrayBuffer(4);
+                        new DataView(buffer).setFloat32(0, parseFloat(val), true);
+                        new Uint8Array(buffer).forEach(b => objBody.push(b));
+                    } else if (t === 'int') {
+                        const buffer = new ArrayBuffer(4);
+                        new DataView(buffer).setInt32(0, parseInt(val), true);
+                        new Uint8Array(buffer).forEach(b => objBody.push(b));
+                    } else { 
+                        const buffer = new ArrayBuffer(4);
+                        new DataView(buffer).setUint32(0, parseInt(val), true);
+                        new Uint8Array(buffer).forEach(b => objBody.push(b));
+                    }
+                    currentBodyOff += size;
+                }
+
+                const vtableLen = 4 + (maxFid + 1) * 2;
+                const objectLen = 4 + objBody.length;
+                
+                let vtableBytes = [];
+                let b = new ArrayBuffer(2); new DataView(b).setUint16(0, vtableLen, true); new Uint8Array(b).forEach(x=>vtableBytes.push(x));
+                b = new ArrayBuffer(2); new DataView(b).setUint16(0, objectLen, true); new Uint8Array(b).forEach(x=>vtableBytes.push(x));
+                
+                for(let i=0; i<=maxFid; i++) {
+                    const off = objBodyOffsets[i] || 0;
+                    b = new ArrayBuffer(2); new DataView(b).setUint16(0, off, true); new Uint8Array(b).forEach(x=>vtableBytes.push(x));
+                }
+
+                let pad = (4 - (this.buffer.byteLength % 4)) % 4;
+                if(pad>0) this.appendBytes(new Uint8Array(pad));
+                
+                const vtableStart = this.buffer.byteLength;
+                this.appendBytes(new Uint8Array(vtableBytes));
+                
+                pad = (4 - (this.buffer.byteLength % 4)) % 4;
+                if(pad>0) this.appendBytes(new Uint8Array(pad));
+                
+                const objectStart = this.buffer.byteLength;
+                const soffset = objectStart - vtableStart;
+                
+                b = new ArrayBuffer(4); new DataView(b).setInt32(0, soffset, true); this.appendBytes(new Uint8Array(b));
+                
+                const bodyStartInFile = this.buffer.byteLength;
+                this.appendBytes(new Uint8Array(objBody));
+                
+                for(let ph of stringPlaceholders) {
+                    const strLoc = this.appendString(ph.val);
+                    const fieldLoc = bodyStartInFile + ph.relOff;
+                    const uoffset = strLoc - fieldLoc;
+                    this.dataView.setUint32(fieldLoc, uoffset, true);
+                }
+                
+                return objectStart;
+            }
+        }
+
+        // --- 增强的日志与UI逻辑 ---
+
+        function terminalPrint(msg) {
+            const out = document.getElementById('terminal-output');
+            out.innerText += msg + '\n';
+            out.scrollTop = out.scrollHeight;
+        }
+
+        // 格式化物品信息字符串
+        function formatItemStr(item) {
+            if(!item) return "未知物品";
+            return `${item.id} | ${item.name} | ${item.comm}`;
+        }
+
+        function logAction(type, item, message) {
+            const log = document.getElementById('app-log');
+            const div = document.createElement('div');
+            
+            let typeClass = 'log-sys';
+            let label = '系统';
+            
+            if(type === 'select') { typeClass = 'log-select'; label = '选中'; }
+            else if(type === 'action') { typeClass = 'log-action'; label = '执行'; }
+            else if(type === 'error') { typeClass = 'log-error'; label = '错误'; }
+
+            let itemInfo = '';
+            if(item) {
+                // ID Name Remark 顺序
+                itemInfo = `<span class="log-detail">${formatItemStr(item)}</span>`;
+            }
+
+            div.className = `log-entry ${typeClass}`;
+            div.innerHTML = `
+                <div class="font-bold flex flex-col w-full">
+                    <div class="flex items-center gap-2">
+                        <span class="tag text-xs transform -skew-x-10">${label}</span>
+                        <span>${message}</span>
+                    </div>
+                    ${itemInfo}
+                </div>
+            `;
+            
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function switchTab(id, e) {
+            document.querySelectorAll('.tab-content').forEach(d => d.classList.add('hidden'));
+            document.getElementById(`${id}-content`).classList.remove('hidden');
+            document.querySelectorAll('.comic-tab-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            if(id==='task-list') renderTaskList();
+        }
+
+        function handleSearch(type) {
+            if(!editor) return;
+            const val = document.getElementById(`${type}-search`).value.trim().toLowerCase();
+            const resDiv = document.getElementById(`${type}-results`);
+            
+            if(type !== 'target') document.getElementById(`${type}-id`).value = "";
+            
+            if(type === 'target') {
+                document.getElementById('target-id').value = ""; 
+                currentSearchResults = [];
+                document.getElementById('select-all-btn').classList.add('hidden');
+                document.getElementById('target-search').classList.remove('batch-active');
+            }
+
+            if(val.length < 1) { resDiv.style.display='none'; return; }
+
+            // 搜索逻辑：先筛选，再排序
+            let matches = itemSearchIndex.filter(i => i.searchStr.includes(val));
+            
+            matches.sort((a, b) => {
+                const idA = String(a.data.id); const idB = String(b.data.id);
+                const nA = a.data.name.toLowerCase(); const nB = b.data.name.toLowerCase();
+                const cA = a.data.comm.toLowerCase(); const cB = b.data.comm.toLowerCase();
+                
+                // 1. 任意一项完全匹配 (最高优先级)
+                const aExact = (idA === val || nA === val || cA === val);
+                const bExact = (idB === val || nB === val || cB === val);
+                
+                if (aExact && !bExact) return -1;
+                if (bExact && !aExact) return 1;
+
+                // 2. 名称以..开头 (次高优先级)
+                const aStart = nA.startsWith(val);
+                const bStart = nB.startsWith(val);
+                if (aStart && !bStart) return -1;
+                if (bStart && !aStart) return 1;
+                
+                // 3. 默认包含匹配 (按ID排序)
+                return 0;
+            });
+
+            currentSearchResults = matches;
+            
+            const show = matches.slice(0, 50);
+            resDiv.innerHTML = '';
+            
+            if(show.length > 0) {
+                resDiv.style.display = 'block';
+                if(type === 'target') {
+                     const btn = document.getElementById('select-all-btn');
+                     btn.textContent = `锁定全部 (${matches.length})`;
+                     btn.classList.remove('hidden');
+                }
+
+                show.forEach(m => {
+                    const d = document.createElement('div');
+                    d.className = 'search-item';
+                    d.innerHTML = `
+                        <div>
+                            <div class="font-bold">${m.data.name||'无名称'}</div>
+                            <div class="text-xs opacity-70">${m.data.id} | ${m.data.comm}</div>
+                        </div>
+                        <div class="badge">T:${m.data.equipType}</div>
+                    `;
+                    d.onclick = () => {
+                        document.getElementById(`${type}-search`).value = `${m.data.name} (${m.data.id})`;
+                        document.getElementById(`${type}-id`).value = m.data.id;
+                        
+                        logAction('select', m.data, `通过 ${type} 搜索选中`);
+
+                        if(type === 'target') {
+                             currentSearchResults = []; 
+                             document.getElementById('select-all-btn').classList.add('hidden');
+                             document.getElementById('target-search').classList.remove('batch-active');
+                             editor.current_item_index = m.data.index;
+                        }
+                        
+                        if(type === 'w') {
+                            editor.current_item_index = m.data.index;
+                            updateWValuePreview();
+                        }
+                        
+                        resDiv.style.display = 'none';
+                    };
+                    resDiv.appendChild(d);
+                });
+            } else {
+                resDiv.style.display = 'none';
+            }
+        }
+
+        window.selectAllTargets = function() {
+            if(currentSearchResults.length === 0) return;
+            const input = document.getElementById('target-search');
+            input.value = `[批量锁定: ${currentSearchResults.length} 项]`;
+            input.classList.add('batch-active');
+            document.getElementById('target-results').style.display = 'none';
+            document.getElementById('select-all-btn').classList.add('hidden');
+            logAction('select', null, `批量锁定了 ${currentSearchResults.length} 个物品用于处理。`);
+        };
+
+        window.executeBeauty = function(overrideTId, overrideSId, overrideRename) {
+            if (!editor) return logAction('error', null, "未加载文件");
+            
+            let targets = [];
+            if (overrideTId) {
+                const t = editor.items_cache.find(i=>i.id == overrideTId);
+                if(t) targets = [t];
+            } else {
+                const isBatch = document.getElementById('target-search').classList.contains('batch-active');
+                const singleTId = document.getElementById('target-id').value;
+                if(isBatch && currentSearchResults.length > 0) {
+                    targets = currentSearchResults.map(m => m.data);
+                } else if (singleTId) {
+                    const tItem = editor.items_cache.find(i => i.id == singleTId);
+                    if(tItem) targets = [tItem];
+                }
+            }
+
+            if (targets.length === 0) return logAction('error', null, "未选择目标");
+
+            const sId = overrideSId || document.getElementById('source-id').value;
+            const rename = overrideRename !== undefined ? overrideRename : document.getElementById('rename-input').value.trim();
+            
+            let successCount = 0;
+
+            targets.forEach(tItem => {
+                let finalSId = sId;
+                if (!finalSId) finalSId = tItem.id; 
+
+                const sItem = editor.items_cache.find(i => i.id == finalSId);
+                
+                if(tItem && sItem) {
+                     const isPreserve = (tItem.id === sItem.id && !rename);
+                     
+                     if(isPreserve) {
+                         tItem.modified = true;
+                     } else {
+                         if (tItem.id !== sItem.id) {
+                             const pointers = editor.findPointersToTable(tItem.table_loc);
+                             for(const p of pointers) {
+                                 const off = sItem.table_loc - p;
+                                 editor.dataView.setUint32(p, off, true);
+                             }
+                         }
+                         const modLoc = (tItem.id !== sItem.id) ? sItem.table_loc : tItem.table_loc;
+                         const po0 = editor.getFieldOffset(modLoc, 0);
+                         if(po0) editor.dataView.setUint32(modLoc + po0, tItem.id, true);
+                         if(rename) editor.updateStringInPlace(modLoc, 3, rename);
+                         
+                         if(tItem.id !== sItem.id) tItem.table_loc = sItem.table_loc;
+                         tItem.modified = true;
+                     }
+                     
+                     // 任务详情 - 统一格式
+                     const descObj = {
+                         title: isPreserve ? '保留操作' : '美化操作',
+                         target: formatItemStr(tItem),
+                         source: formatItemStr(sItem),
+                         extra: rename ? `改名: ${rename}` : '未改名'
+                     };
+
+                     const cmdStr = `b ${tItem.id} ${sItem.id} ${rename||''}`;
+                     modTasks.push({ type: 'beauty', cmd: cmdStr, descObj: descObj });
+                     
+                     logAction('action', tItem, `美化/保留已应用。源: ${sItem.id}`);
+                     
+                     keepIndices.add(tItem.index); 
+                     if(tItem.id !== sItem.id) keepIndices.add(sItem.index);
+                     editor.current_item_index = tItem.index;
+                     successCount++;
+                }
+            });
+            
+            if(!overrideTId) {
+                // UI 操作清理
+                document.getElementById('target-search').value = '';
+                document.getElementById('target-search').classList.remove('batch-active');
+                document.getElementById('source-search').value = '';
+                document.getElementById('source-id').value = '';
+                document.getElementById('rename-input').value = '';
+                currentSearchResults = [];
+            }
+        };
+
+        function getReadableFieldName(fid) {
+            if (fid === 0) return "ID";
+            if (fid === 1) return "备注";
+            if (fid === 3) return "名称";
+            
+            const rawName = FIELD_NAME_MAP.get(fid) || "Unknown";
+            return `${rawName} (FID ${fid})`;
+        }
+
+        function updateWValuePreview() {
+             const tId = document.getElementById('w-id').value;
+             const fid = document.getElementById('w-fid-select').value;
+             if(!tId || !fid || !editor) return;
+             const item = editor.items_cache.find(i => i.id == tId);
+             if(item) {
+                 const d = editor.get_item_data(item.table_loc);
+                 const v = d[fid];
+                 document.getElementById('w-value-input').value = (v!==undefined)?v:'';
+             }
+        }
+
+        window.executeWMod = function(overrideId, overrideFid, overrideVal) {
+            const tId = overrideId || document.getElementById('w-id').value;
+            const fidStr = overrideFid || document.getElementById('w-fid-select').value;
+            const valRaw = overrideVal || document.getElementById('w-value-input').value;
+            
+            if(!editor || !tId || !fidStr) return logAction('error', null, "缺少参数");
+            const fid = parseInt(fidStr);
+            const item = editor.items_cache.find(i => i.id == tId);
+            if(!item) return logAction('error', null, `物品 ID ${tId} 未找到`);
+
+            const targetType = FIELD_TYPE_MAP.get(fid) || 'uint';
+            const po = editor.getFieldOffset(item.table_loc, fid);
+            const fieldName = getReadableFieldName(fid);
+
+            let success = false;
+            let actionType = "原位修改";
+
+            if (po !== 0) {
+                if (targetType === 'string') {
+                    if (editor.updateStringInPlace(item.table_loc, fid, valRaw)) success = true;
+                } else {
+                    if (editor.writeFieldInPlace(item.table_loc, fid, valRaw, targetType)) success = true;
+                }
+            } else {
+                actionType = "新建数据块";
+                try {
+                    const data = editor.get_item_data(item.table_loc);
+                    data[fid] = valRaw;
+                    const newLoc = editor.createNewTable(data);
+                    const targetPtr = item.ptr_loc;
+                    const newOffset = newLoc - targetPtr;
+                    editor.dataView.setUint32(targetPtr, newOffset, true);
+                    item.table_loc = newLoc;
+                    success = true;
+                } catch(e) {
+                    logAction('error', item, `新建数据块失败: ${e.message}`);
+                }
+            }
+
+            if (success) {
+                item.modified = true;
+                keepIndices.add(item.index);
+                logAction('action', item, `修改 [${fieldName}] 为 "${valRaw}" (${actionType})`);
+                
+                const descObj = {
+                    title: '属性修改',
+                    target: formatItemStr(item),
+                    source: `${fieldName} = ${valRaw}`,
+                    extra: `模式: ${actionType}`
+                };
+                modTasks.push({type:'mod', cmd: `w ${tId} ${fid} ${valRaw}`, descObj: descObj});
+                terminalPrint(`> 修改成功: ${item.name} | ${fieldName} = ${valRaw}`);
+            } else {
+                logAction('error', item, `修改失败: ${fieldName}`);
+            }
+            renderTaskList();
+        };
+
+        window.viewAttributes = function() {
+            if(!editor) return;
+            let targetIdx = editor.current_item_index;
+            const wId = document.getElementById('w-id').value;
+            if(wId) {
+                const i = editor.items_cache.find(x=>x.id==wId);
+                if(i) targetIdx = i.index;
+            }
+            
+            if(targetIdx === -1) return logAction('error', null, "未选择物品");
+            const item = editor.items_cache[targetIdx];
+            const data = editor.get_item_data(item.table_loc);
+            
+            terminalPrint(`\n=== 物品属性: ${item.name} (${item.id}) ===`);
+            terminalPrint(`备注: ${item.comm}`);
+            terminalPrint(`----------------------------------------`);
+            
+            Object.keys(data).sort((a,b)=>parseInt(a)-parseInt(b)).forEach(fid => {
+                const fidNum = parseInt(fid);
+                let fname = getReadableFieldName(fidNum);
+                terminalPrint(`[${fid.padEnd(3)}] ${fname}: ${data[fid]}`);
+            });
+            terminalPrint(`=== 结束 ===\n`);
+            
+            const out = document.getElementById('terminal-output');
+            out.scrollTop = out.scrollHeight;
+        };
+
+        function renderTaskList() {
+            const div = document.getElementById('task-log');
+            div.innerHTML = '';
+            document.getElementById('task-count').textContent = modTasks.length;
+            modTasks.slice().reverse().forEach(t => {
+                const d = document.createElement('div');
+                d.className = 'task-card';
+                
+                const desc = t.descObj || { title: '未知', target: '?', source: '?', extra: '' };
+                
+                d.innerHTML = `
+                    <div class="font-bold text-lg mb-1 border-b border-black text-blue-800">${desc.title}</div>
+                    <div class="row"><span class="label">目标:</span><span class="val">${desc.target}</span></div>
+                    <div class="row"><span class="label">内容:</span><span class="val">${desc.source}</span></div>
+                    <div class="row"><span class="label">附注:</span><span class="val text-gray-500">${desc.extra}</span></div>
+                `;
+                div.appendChild(d);
+            });
+        }
+
+        // --- 还原功能 (Restore) ---
+        window.restoreAll = function() {
+            if(!editor) return;
+            editor.restore();
+            modTasks = [];
+            keepIndices = new Set();
+            currentSearchResults = [];
+            renderTaskList();
+            
+            document.getElementById('target-search').classList.remove('batch-active');
+            document.getElementById('target-search').value = '';
+            document.getElementById('select-all-btn').classList.add('hidden');
+            toggleAllEquipTypes(false);
+            
+            terminalPrint("> 系统已还原。");
+        };
+        
+        // --- Blacklist UI/Logic Functions ---
+        
+        function updateBlacklistUI(overrideMode) {
+            const mode = overrideMode || document.querySelector('input[name="bl-mode"]:checked').value;
+            if(overrideMode) {
+                document.querySelector(`input[name="bl-mode"][value="${mode}"]`).checked = true;
+            }
+            const area = document.getElementById('bl-selector-area');
+            
+            if (mode === 'off') {
+                area.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                area.classList.remove('opacity-50', 'pointer-events-none');
+            }
+            logAction('sys', null, `黑/白名单模式: ${mode}`);
+        }
+        
+        function renderEquipTypeSelector() {
+            const container = document.getElementById('equiptype-list');
+            if (!container) return;
+            container.innerHTML = '';
+            const types = Object.keys(typeCounts).map(Number).sort((a,b)=>a-b); 
+            
+            types.forEach(t => {
+                const count = typeCounts[t];
+                const label = document.createElement('label');
+                label.className = 'et-item';
+                label.innerHTML = `
+                    <input type="checkbox" name="et-check" value="${t}" class="w-4 h-4 text-red-600 bg-gray-100 border-black focus:ring-red-500">
+                    <span>Type ${t} <span class="text-gray-500 text-xs">(${count})</span></span>
+                `;
+                container.appendChild(label);
+            });
+            updateBlacklistUI(); 
+        }
+        
+        function toggleAllEquipTypes(check) {
+            document.querySelectorAll('input[name="et-check"]').forEach(cb => cb.checked = check);
+        }
+
+        // --- Terminal / Batch Execution ---
+        window.executeTerminalCommand = function() {
+            const input = document.getElementById('terminal-input');
+            const raw = input.value.trim();
+            if(!raw) return;
+            
+            terminalPrint(`$ ${raw}`);
+
+            const lines = raw.split(/\n|;/).map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith('>'));
+            
+            lines.forEach(cmdStr => {
+                const parts = cmdStr.split(/\s+/);
+                const cmd = parts[0].toLowerCase();
+
+                if(cmd === 'r') {
+                   // Search/Read
+                   const t = editor.items_cache.find(i => i.id == parts[1] || i.name == parts[1]);
+                   if(t) {
+                       logAction('select', t, '控制台选中');
+                       editor.current_item_index = t.index;
+                       viewAttributes();
+                   } else {
+                       terminalPrint(`! 未找到物品: ${parts[1]}`);
+                   }
+                } 
+                else if (cmd === 'b') {
+                    if(parts.length >= 3) {
+                        executeBeauty(parts[1], parts[2], parts[3]);
+                    }
+                }
+                else if (cmd === 'w') {
+                    if(parts.length >= 4) {
+                        executeWMod(parts[1], parts[2], parts[3]);
+                    }
+                }
+                else if (cmd === 'bl') {
+                    if(parts[1] === 'mode') updateBlacklistUI(parts[2]);
+                    else if (parts[1] === 'add') {
+                        const cb = document.querySelector(`input[name="et-check"][value="${parts[2]}"]`);
+                        if(cb) cb.checked = true;
+                    } 
+                    else if (parts[1] === 'clear') toggleAllEquipTypes(false);
+                }
+            });
+            
+            input.value = '';
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-results') && !e.target.closest('.comic-input')) {
+                document.querySelectorAll('.search-results').forEach(el => el.style.display = 'none');
+            }
+        });
+        
+        document.getElementById('w-fid-select').addEventListener('change', updateWValuePreview);
+
+        document.getElementById('file-upload').addEventListener('change', (e) => {
+            const f = e.target.files[0];
+            if(!f) return;
+            const r = new FileReader();
+            r.onload = (evt) => {
+                editor = new ShopEditor(evt.target.result);
+                const s = document.getElementById('w-fid-select');
+                s.innerHTML = '<option disabled selected>选择属性...</option>';
+                FIELDS_FINAL_VERIFIED.forEach(([f,n]) => {
+                    const o = document.createElement('option');
+                    let displayText = n;
+                    if(f===0) displayText = "ID";
+
+                    o.value = f; 
+                    o.text = `${displayText} [${f}]`;
+                    s.appendChild(o);
+                });
+                document.getElementById('file-status').textContent = `✅ 已加载: ${f.name}`;
+                document.getElementById('export-button').disabled = false;
+                terminalPrint("> 文件已加载。系统就绪。");
+            };
+            r.readAsArrayBuffer(f);
+        });
+
+        window.executeExport = function() {
+            if(!editor) return;
+            
+            let batchScript = ">>> 自动生成的批处理脚本 <<<\n";
+            modTasks.forEach(task => {
+                if(task.cmd) batchScript += `${task.cmd}\n`;
+            });
+            
+            const blMode = document.querySelector('input[name="bl-mode"]:checked').value;
+            batchScript += `bl mode ${blMode}\n`;
+            if (blMode !== 'off') {
+                batchScript += `bl clear\n`;
+                document.querySelectorAll('input[name="et-check"]:checked').forEach(cb => {
+                    batchScript += `bl add ${cb.value}\n`;
+                });
+            }
+            batchScript += ">>> 脚本结束 <<<";
+            
+            console.log(batchScript);
+            terminalPrint(">>> 批处理脚本已生成至日志 <<<");
+            
+            const log = document.getElementById('app-log');
+            const pre = document.createElement('pre');
+            pre.className = "text-xs bg-gray-800 p-2 border border-yellow-400 text-yellow-200 select-all mt-2 font-mono whitespace-pre-wrap";
+            pre.textContent = batchScript.replace(/>>>.*<<<\n?/g, '');
+            log.appendChild(pre);
+            log.scrollTop = log.scrollHeight;
+
+            if (blMode !== 'off') {
+                const selectedTypes = new Set();
+                document.querySelectorAll('input[name="et-check"]:checked').forEach(cb => selectedTypes.add(parseInt(cb.value)));
+
+                logAction('sys', null, `正在应用筛选: ${blMode}`);
+                let count = 0;
+                
+                editor.items_cache.forEach(item => {
+                    if(keepIndices.has(item.index) || item.modified) return; 
+
+                    const et = item.equipType || 0;
+                    const isSelected = selectedTypes.has(et);
+                    let shouldClean = false;
+                    
+                    if (blMode === 'block') { if (isSelected) shouldClean = true; } 
+                    else if (blMode === 'allow') { if (!isSelected) shouldClean = true; }
+
+                    if (shouldClean) {
+                        const po0 = editor.getFieldOffset(item.table_loc, 0);
+                        if(po0 !== 0) {
+                            editor.dataView.setUint32(item.table_loc + po0, BLACKLIST_ID, true);
+                            count++;
+                        }
+                    }
+                });
+                
+                logAction('sys', null, `已过滤 ${count} 个物品 (ID -> ${BLACKLIST_ID})`);
+            }
+
+            const b = new Blob([editor.buffer], {type:'application/octet-stream'});
+            const u = URL.createObjectURL(b);
+            const a = document.createElement('a');
+            a.href=u; a.download=OUTPUT_FILENAME; a.click();
+            logAction('action', null, "预告信 (文件) 已成功导出！");
+        }
+
+    </script>
+</body>
+</html>
