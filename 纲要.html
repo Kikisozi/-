@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中国近现代史与中国化马克思主义发展脉络图谱</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Configuration for Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'p1-theme': '#ef4444', // Red for Old Democratic Revolution
+                        'p2-theme': '#22c55e', // Green for New Democratic Revolution
+                        'p3-theme': '#3b82f6', // Blue for Socialism Construction
+                        'p4-theme': '#f97316', // Orange for Reform and Opening Up
+                        'p5-theme': '#8b5cf6', // Violet for New Era
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                        'timeline': '0 0 15px rgba(0, 0, 0, 0.15)',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Base Glassmorphism Styles */
+        .glass-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border-radius: 12px;
+        }
+
+        /* Timeline Specific Styles */
+        .timeline-line {
+            width: 4px;
+            background: linear-gradient(to bottom, #ef4444 0%, #22c55e 20%, #3b82f6 40%, #f97316 60%, #8b5cf6 80%, #06b6d4 100%);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 0;
+            bottom: 0;
+            z-index: 1;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            width: 50%;
+            padding: 0 1.5rem;
+            z-index: 2;
+        }
+
+        .timeline-item:nth-child(even) {
+            margin-left: 50%;
+            text-align: left;
+        }
+
+        .timeline-item:nth-child(odd) {
+            margin-left: 0;
+            text-align: right;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            top: 0.5rem;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            border: 3px solid white;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:nth-child(odd) .timeline-dot {
+            right: -8px;
+        }
+
+        .timeline-item:nth-child(even) .timeline-dot {
+            left: -8px;
+        }
+
+        .timeline-item:hover .timeline-dot {
+            transform: scale(1.5);
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .timeline-line {
+                left: 20px;
+                transform: none;
+            }
+            .timeline-item, .timeline-item:nth-child(even), .timeline-item:nth-child(odd) {
+                width: 100%;
+                margin-left: 0;
+                padding-left: 50px;
+                text-align: left;
+            }
+            .timeline-item:nth-child(odd) .timeline-dot, .timeline-item:nth-child(even) .timeline-dot {
+                left: 12px;
+                right: auto;
+            }
+        }
+
+        /* Modal specific styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7); /* Darker backdrop */
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 90%;
+            max-width: 1000px;
+            padding: 2.5rem;
+        }
+    </style>
+</head>
+<body class="font-sans min-h-screen bg-gray-900 text-white" style="background-image: url('https://placehold.co/1920x1080/061A40/8D99AE?text=Historical+Abstract+Background'); background-size: cover; background-attachment: fixed;">
+
+    <!-- Main Content Container with Glassmorphism Effect -->
+    <div class="container mx-auto p-4 md:p-10 my-8 glass-container">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-2 tracking-wider">中国近现代史与中国化马克思主义发展脉络图谱</h1>
+            <p class="text-xl opacity-80">以时间为轴，串联详尽历史事件、背景、人物、著作、意义及影响</p>
+        </header>
+
+        <!-- Timeline Container -->
+        <div id="timeline-container" class="relative">
+            <!-- Central Timeline Line -->
+            <div class="timeline-line"></div>
+
+            <!-- Content will be injected here by JavaScript -->
+
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-content glass-container relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-3xl hover:text-p1-theme transition duration-200">&times;</button>
+            <h2 id="modal-title" class="text-3xl font-bold mb-4 border-b pb-2"></h2>
+            <div id="modal-body" class="text-sm leading-relaxed space-y-4">
+                <!-- Detailed content goes here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Historical Data Structure (Extracted from the uploaded document) ---
+
+        const rawData = `
+            第一阶段：旧民主主义革命时期（1840—1919）
+            核心特征 ：救亡图存，探索国家出路。这一时期呈现出“各阶级粉墨登场，各种方案轮番尝试，但因阶级局限性屡遭失败”的悲壮特点。
+
+            1. 鸦片战争与半殖民地半封建社会的形成（1840年起）
+            历史背景与深层动因 ：
+            根本原因 （外部）：19世纪上半叶，西方资本主义国家完成工业革命，急需开辟海外市场和掠夺原料。英国作为头号资本主义强国，其对外扩张具有 历史必然性 。
+            内部原因 （内部）：清王朝处于封建社会末期，政治腐败、军备废弛、财政拮据，处于“落后就要挨打”的境地。
+            直接导火索 ：林则徐虎门销烟。这不仅是禁烟运动的胜利，更展示了中华民族反对外来侵略的决心。
+            关键条约体系与社会性质突变 ：
+            《南京条约》（1842） ：中国近代史上第一个不平等条约。
+            内容影响 ：割让香港岛（破坏领土主权）；协定关税（破坏关税主权）；五口通商（经济侵略深入）。
+            定性 ：标志着中国 开始 沦为半殖民地半封建社会。
+            《马关条约》（1895） ：允许外国人在华设厂（由商品输出转为资本输出）， 大大加深 了半殖民地化程度。
+            《辛丑条约》（1901） ：清政府完全成为“洋人的朝廷”，中国 完全陷入 半殖民地半封建社会的深渊。
+            社会结构与主要矛盾的重构 ：
+            社会性质辨析 ：
+            半殖民地 ：形式上独立，实际上丧失部分主权（政治）。
+            半封建 ：资本主义产生并发展，但封建剥削制度（特别是地主土地所有制）仍占统治地位（经济）。
+            主要矛盾 ：
+            帝国主义与中华民族的矛盾 （最主要、最根本）。
+            封建主义与人民大众的矛盾。
+            两大历史任务 ：
+            争取民族独立、人民解放 （前提、基础，解决生产关系问题）。
+            实现国家富强、人民幸福 （目的、归宿，解决生产力问题）。
+
+            2. 对国家出路的早期探索（三次失败的尝试）
+            (1) 农民阶级的尝试：太平天国运动（1851-1864）
+            纲领性文件深度辨析 ：
+            《天朝田亩制度》 ：确立了平均分配土地的方案。
+            核心逻辑 ：“凡天下田，天下人同耕”。
+            评价 ：最能体现太平天国社会理想，是起义的纲领，冲击了封建地主土地所有制。但其核心是 绝对平均主义 ，违背社会发展规律，是空想，无法在现实中实施。
+            《资政新篇》 （洪仁玕）：
+            内容 ：提倡兴办银行、矿业、交通，并在法律上主张“以法治国”。
+            评价 ：中国近代历史上 第一个比较系统 的发展资本主义的方案。但因缺乏社会基础（农民阶级不理解）和战争环境，未能实施。
+            天京事变与失败根源 ：
+            转折点 ：1856年天京事变，领导集团内部自相残杀，太平天国由盛转衰。
+            失败根本原因 ： 农民阶级的局限性 。农民是小生产者，思想上具有封建性（皇权思想）、组织上具有宗派性、政治上具有短视性。他们无法提出科学的革命纲领，也无法建立坚强的领导核心。
+            历史意义 ：沉重打击了清王朝和外国侵略势力；是中国旧式农民战争的最高峰。
+
+            (2) 地主阶级洋务派的自救：洋务运动（19世纪60-90年代）
+            指导思想 ： “中体西用” （冯桂芬提出）。即以封建伦理纲常为根本（体），以西方科技为辅助（用）。
+            目标与口号 ：“自强”（兴办军事工业，如江南制造总局）、“求富”（兴办民用工业，如轮船招商局，多采用“官督商办”模式）。
+            失败标志 ：甲午中日战争中北洋水师全军覆没。这标志着洋务运动“自强”、“求富”目标的破产。
+            失败深层原因 ：
+            封建性 （根本原因）：只改器物，不改制度。企图用先进的生产力维护腐朽的生产关系。
+            依赖性 ：过分依赖洋人技术与资本。
+            腐朽性 ：管理体制衙门化，贪污腐败严重。
+            历史评价 ：虽然失败，但客观上促进了中国早期工业和民族资本主义的发展，是 中国近代化的开端 ，开启了教育、军事、工业的近代化进程。
+
+            (3) 资产阶级维新派的改良：戊戌维新运动（1898）
+            社会背景 ：甲午战败，民族危机空前严重（瓜分狂潮）；民族资本主义初步发展。
+            维新派与守旧派的论战 ：
+            实质 ：资产阶级思想与封建主义思想在中国的 第一次正面交锋 。
+            焦点 ：1.要不要变法；2.要不要兴民权、设议院，实行君主立宪；3.要不要废八股、改科举和兴西学。
+            百日维新（1898） ：光绪帝颁布新政，但未触及封建制度根本（如未采纳开国会、定宪法的主张）。
+            失败教训 ：
+            局限性表现 ：不敢否定封建主义（保留皇权）、对帝国主义抱有幻想、脱离人民群众（只依靠没有实权的皇帝）。
+            结论 ：在半殖民地半封建的中国，企图通过统治者 自上而下的改良 道路，是行不通的。
+
+            3. 辛亥革命（1911）—— 比较完全意义上的资产阶级民主革命
+            核心领导与组织 ：
+            孙中山：中国民主革命的伟大先驱。
+            同盟会 （1905）：近代中国第一个领导资产阶级革命的全国性政党。
+            旧三民主义 ：
+            民族 （驱除鞑虏，恢复中华）：推翻清政府， 缺点 ：没有明确反帝。
+            民权 （创立民国）： 核心 ，推翻君主专制，建立资产阶级共和国。 缺点 ：没交给人民权利。
+            民生 （平均地权）：核定地价。 缺点 ：并未触动封建土地所有制（没有分地给农民）。
+            革命论战 ：革命派VS改良派。
+            核心分歧 ：要不要以 革命手段 推翻清王朝。
+            意义 ：划清了革命与改良的界限，传播了民主革命思想。
+            法律成果 ： 《中华民国临时约法》 。
+            性质 ：中国历史上第一部具有资产阶级共和国宪法性质的法典。
+            原则 ：主权在民、三权分立。
+            历史功绩（为什么说它具有伟大意义？） ：
+            政治上 ：推翻了清王朝，结束了统治中国两千多年的 君主专制制度 （注意：不是结束封建制度，封建制度的基础是地主土地所有制）。
+            思想上 ：使得 民主共和 的观念深入人心，推动了思想解放。
+            经济上 ：促使社会经济、思想习惯和社会风俗发生积极变化。
+            失败与教训 ：
+            结果 ：袁世凯窃取果实，反帝反封建任务未完成，社会性质未变。
+            原因（资产阶级软弱性） ：
+            没有提出彻底的反帝反封建纲领。
+            不能充分发动和依靠人民群众。
+            不能建立坚强的革命政党。
+            结论 ：资产阶级共和国方案在中国行不通。
+
+
+            第二阶段：新民主主义革命时期（1919—1949）
+            核心特征 ：无产阶级登上历史舞台，马克思主义与中国工人运动结合。中国革命有了新的领导核心——中国共产党。
+
+            1. 开端与建党（1919-1921）
+            五四运动（1919）—— 分水岭 ：
+            前奏 ：新文化运动（口号：民主与科学）为五四运动做了思想准备。
+            导火索 ：巴黎和会外交失败（直接引发了群众愤怒）。
+            性质 ：一次 彻底 地不妥协地反帝反封建的爱国运动。
+            划时代意义 ：
+            工人阶级以独立姿态登上政治舞台。
+            促进了马克思主义在中国的传播及其与工人运动的结合。
+            是 新民主主义革命的开端 。
+
+            中国共产党的诞生（1921） ：
+            历史条件 ：阶级基础（工人阶级壮大）、思想基础（马克思主义传播）、组织基础（各地共产党早期组织）。
+            建党精神 ：坚持真理、坚守理想，践行初心、担当使命，不怕牺牲、英勇斗争，对党忠诚、不负人民（ 中国共产党的精神之源 ）。
+            中共一大（1921） ：宣告中国共产党成立。 意义 ：开天辟地的大事变，中国革命面貌从此 焕然一新 。
+            中共二大（1922） ：
+            最高纲领 ：实现社会主义、共产主义。
+            最低纲领 ：打倒军阀，推翻国际帝国主义的压迫，统一中国为真正的民主共和国。 意义 ：近代历史上 第一次 提出了明确的反帝反封建的民主革命纲领。
+
+            2. 国民革命时期（1924-1927）—— 大革命
+            国共第一次合作 ：
+            标志 ：国民党一大召开。
+            政治基础 ： 新三民主义 。孙中山将旧三民主义发展为联俄、联共、扶助农工的三大政策，这与中共民主革命纲领在若干基本原则上一致。
+            成果 ：黄埔军校建立；北伐战争胜利进军。
+            失败分析 ：
+            客观 ：反动力量强大（蒋介石、汪精卫叛变革命）。
+            主观 ：陈独秀右倾机会主义错误（放弃了对革命、武装和统一战线的 领导权 ）。
+            教训 ：必须建立广泛的统一战线；必须坚持武装斗争；必须坚持无产阶级领导权。
+
+            3. 土地革命战争时期（1927-1937）—— 道路的开辟
+            转折点：八七会议（1927.8.7） ：
+            背景 ：大革命失败，白色恐怖。
+            核心内容 ：彻底清算了大革命后期的陈独秀右倾机会主义错误；确定了 土地革命 和 武装反抗 国民党反动派的总方针。
+            名言 ：毛泽东提出“ 枪杆子里出政权 ”。
+
+            革命道路的探索（农村包围城市、武装夺取政权） ：
+            实践探索 ：
+            南昌起义 ：打响了武装反抗国民党反动派的第一枪，是中共独立领导武装斗争的开始。
+            秋收起义 ：打出了“工农革命军”的旗帜，文家市决策后转兵井冈山。
+            三湾改编 ：确立了 党对军队的绝对领导 （军魂），是建设新型人民军队的重要开端。
+            理论支撑 ：
+            毛泽东撰写《中国的红色政权为什么能够存在？》《井冈山的斗争》《星星之火，可以燎原》。
+            《反对本本主义》 ：提出“没有调查，没有发言权”，反对教条主义，标志着 毛泽东思想初步形成 。
+
+            古田会议（1929） ：确立了 思想建党、政治建军 的原则。规定红军是一个执行革命的政治任务的武装集团。
+
+            ★ 生死攸关的转折：遵义会议（1935.1） ：
+            背景 ：王明“左”倾教条主义导致第五次反“围剿”失败，红军被迫长征。湘江战役后红军损失惨重。
+            内容 ：集中解决了当时具有决定意义的 军事问题 和 组织问题 。
+            长征中的光辉篇章 ：四渡赤水（变被动为主动）、巧渡金沙江（跳出包围圈）、强渡大渡河、飞夺泸定桥、爬雪山过草地（革命乐观主义精神）。
+            伟大意义 ：
+            开始确立以毛泽东为代表的马克思主义正确路线在党中央的领导地位。
+            挽救了党、挽救了红军、挽救了中国革命。
+            标志着中国共产党在 政治上开始走向成熟 。
+
+            4. 抗日战争时期（1931-1945）—— 思想成熟与民族复兴枢纽
+            时局转换与统一战线 ：
+            九一八事变（1931） ：抗日战争（局部）开始。
+            瓦窑堡会议（1935） ：确立了抗日民族统一战线的策略方针（解决政治路线问题）。
+            西安事变（1936） ：
+            分析 ：中共从民族大义出发，促成和平解决。
+            意义 ：十年内战基本结束，国内和平初步实现，时局转换的枢纽，统一战线 初步形成 。
+            七七事变（1937） ：全民族抗战开始，国共第二次合作，统一战线 正式形成 。
+
+            全面抗战路线与持久战 ：
+            洛川会议（1937） ：制定全面抗战路线（人民战争路线）。
+            《论持久战》（1938） ：系统阐述抗日战争的持久性特点，预言了防御、相持、反攻三个阶段。提出“ 兵民是胜利之本 ”。
+
+            抗日民主根据地的建设 ：
+            政治上 ：“三三制”原则（共产党员、非党左派进步分子、不左不右的中间分子各占1/3），加强了政权民主建设。
+            经济上 ： 减租减息 （既减轻农民负担，又照顾地主利益，有利于团结抗日）。
+
+            毛泽东思想的成熟 ：
+            标志 ：《新民主主义论》的发表。系统阐述了新民主主义革命的理论（总路线、三大纲领）。
+            六届六中全会（1938） ：毛泽东首次提出“ 马克思主义中国化 ”的命题。
+
+            延安整风运动（1941-1945） ：
+            性质 ：一场伟大的思想解放运动。
+            内容 ：反对主观主义以整顿学风（ 最主要任务 ）；反对宗派主义以整顿党风；反对党八股以整顿文风。
+            方针 ：“惩前毖后，治病救人”。
+            结果 ：一切从实际出发、理论联系实际、实事求是的马克思主义思想路线，在全党范围内确立了起来。
+
+            党的七大与第一个历史决议（1945） ：
+            《关于若干历史问题的决议》 ：总结了建党以来特别是六届四中全会至遵义会议期间的经验教训，统一了全党思想，增强了党的团结。
+            中共七大 ：
+            将 毛泽东思想 确立为党的指导思想并写入党章。
+            概括了 三大优良作风 （理论联系实际、密切联系群众、批评与自我批评），这是中共区别于其他政党的显著标志。
+            抗战胜利的伟大意义 ：
+            近代以来中国人民反抗外敌入侵 第一次取得完全胜利 的民族解放斗争。
+            促进了中华民族的觉醒，是中华民族从近代以来陷入深重危机走向伟大复兴的 历史转折点 （枢纽）。
+            中国共产党在中流砥柱作用中获得了广泛支持。
+
+            5. 解放战争时期（1945-1949）
+            两种命运的决战 ：
+            重庆谈判（1945） ：签署“双十协定”，中共争取和平民主，揭露国民党假和平真内战阴谋。
+            两条战线 ：
+            军事战线 ：三大战役（辽沈、淮海、平津），国民党主力基本被消灭。
+            政治战线 ：第二条战线（以学生运动为先导的人民民主运动），配合了军事斗争，说明国民党统治已陷入全民包围中。
+            政策调整 ：
+            土地改革 ：由抗战时期的“减租减息”变为“耕者有其田”（《中国土地法大纲》）。极大地激发了农民革命积极性。
+
+            七届二中全会（1949.3，西柏坡） ：
+            重心转移 ：由乡村转移到城市。
+            两个务必 ：务必使同志们继续地保持谦虚、谨慎、不骄、不躁的作风，务必使同志们继续地保持艰苦奋斗的作风（进京赶考）。
+
+            《论人民民主专政》（1949.6） ：
+            总结经验：“总结我们的经验，集中到一点，就是工人阶级（经过共产党）领导的以工农联盟为基础的人民民主专政。”
+            为新中国的建立奠定了理论基础和政策基础。
+
+            第三阶段：社会主义革命和建设时期（1949—1978）
+            核心特征 ：完成由新民主主义向社会主义的过渡，确立社会主义基本制度，在探索中曲折前进。
+
+            1. 过渡时期（1949-1956）—— “一化三改”
+            新中国成立的意义 ：
+            实现了民族独立和人民解放；彻底结束了半殖民地半封建社会的历史；废除了不平等条约；中国人民从此站起来了。
+            标志着我国进入 新民主主义社会 （这是一个过渡性的社会形态，不是独立的社会形态）。
+            过渡时期总路线 ：
+            内容 ：一化三改（一体两翼）。
+            主体 ：社会主义工业化（发展生产力）。
+            两翼 ：对农业、手工业、资本主义工商业的社会主义改造（变革生产关系）。
+            特点 ：社会主义建设与社会主义改造同时并举。
+            改造的完成（1956） ：
+            农业 ：积极发展稳步前进，互助组 -> 初级社 -> 高级社。
+            工商业 ： 和平赎买 政策（马克思主义与中国实践结合的创举）。
+            形式：从低级国家资本主义（加工订货、统购包销）到高级国家资本主义（公私合营）。
+            意义 ：标志着 社会主义基本制度 在我国确立，我国进入 社会主义初级阶段 。
+
+            2. 社会主义建设的初步探索（1956-1976）
+            良好开局与理论创新 ：
+            《论十大关系》（1956.4） ：
+            背景 ：苏联模式弊端暴露。
+            内容 ：讨论重工业轻工业农业关系、沿海与内地关系等。
+            意义 ：毛泽东总结教训， 开始探索 中国自己的社会主义建设道路。提出基本方针：调动一切积极因素为社会主义事业服务。
+
+            中共八大（1956.9） ：
+            矛盾分析 ：国内主要矛盾已经不再是工人阶级和资产阶级的矛盾，而是人民对于经济文化迅速发展的需要同当前经济文化不能满足人民需要的状况之间的矛盾。
+            方针 ：既反保守又反冒进，在综合平衡中稳步前进。
+
+            理论深化：《关于正确处理人民内部矛盾的问题》（1957） ：
+            核心思想 ：社会主义社会充满矛盾。
+            两类矛盾 ：
+            敌我矛盾 （对抗性）：分清敌我，采用专政方法。
+            人民内部矛盾 （非对抗性）：分清是非，采用民主方法（ 说服教育 ）。
+            主题 ：把 正确处理人民内部矛盾 作为国家政治生活的主题。
+
+            曲折与成就 ：
+            曲折 ：“大跃进”（忽视客观经济规律）、人民公社化运动、“文化大革命”。
+            成就 ：建立起独立的、比较完整的工业体系和国民经济体系（两弹一星、恢复联合国合法席位、中美关系破冰）。
+
+            第四阶段：改革开放和社会主义现代化建设新时期（1978—2012）
+            核心特征 ：解放思想，实事求是，开创、坚持和发展中国特色社会主义。
+
+            1. 伟大转折与第二个历史决议
+            真理标准问题大讨论（1978） ：
+            内容 ：实践是检验真理的唯一标准。
+            意义 ：冲破了“两个凡是”的束缚，是一场深刻的思想解放运动，为十一届三中全会做了思想准备。
+
+            ★ 十一届三中全会（1978.12） ：
+            思想路线 ：彻底否定“两个凡是”，重新确立了解放思想、实事求是的思想路线。
+            政治路线 ：停止使用“以阶级斗争为纲”，将工作重心转移到经济建设上来。
+            决策 ：实行 改革开放 。
+            意义 ：新中国成立以来党的历史上具有深远意义的伟大转折，开启了改革开放和社会主义现代化建设新时期。
+
+            第二个历史决议（1981） ：
+            全称 ： 《关于建国以来党的若干历史问题的决议》 。
+            核心内容 ：科学评价了毛泽东和毛泽东思想。指出毛泽东的功绩是第一位的，错误是第二位的。
+            意义 ：标志着党在指导思想上拨乱反正的胜利完成。
+
+            2. 邓小平理论 —— 解决“什么是社会主义，怎样建设社会主义”
+            十二大（1982） ：邓小平提出“ 建设有中国特色的社会主义 ”命题。
+            十三大（1987） ：系统阐述 社会主义初级阶段理论 和党在初级阶段的 基本路线 （一个中心，两个基本点）。
+
+            南方谈话（1992） ：
+            背景 ：东欧剧变、苏联解体，国内对于改革开放姓“资”还是姓“社”有争论。
+            社会主义本质 ：解放生产力，发展生产力，消灭剥削，消除两极分化，最终达到共同富裕。
+            计划与市场 ：计划和市场都是经济手段，不是区分资本主义和社会主义的标志。
+            结果 ：推动了十四大确立 社会主义市场经济体制 的改革目标。
+
+            3. “三个代表”重要思想与科学发展观
+            “三个代表” （江泽民）：
+            核心 ：始终代表中国先进生产力的发展要求、代表中国先进文化的前进方向、代表中国最广大人民的根本利益。
+            解决问题 ：“建设什么样的党，怎样建设党”。
+
+            科学发展观 （胡锦涛）：
+            背景 ：非典疫情引发对发展模式的思考。
+            内容 ：第一要义是发展，核心是 以人为本 ，基本要求是全面协调可持续，根本方法是统筹兼顾。
+            解决问题 ：“实现什么样的发展，怎样发展”。
+
+            第五阶段：中国特色社会主义新时代（2012—至今）
+            核心特征 ：强起来，主要矛盾转化，习近平新时代中国特色社会主义思想。
+
+            1. 历史方位与主要矛盾的转化
+            新时代 ：是承前启后、继往开来，在新的历史条件下继续夺取中国特色社会主义伟大胜利的时代；是决胜全面建成小康社会、进而全面建设社会主义现代化强国的时代。
+            主要矛盾 ：由“人民日益增长的物质文化需要同落后的社会生产之间的矛盾”转化为“ 人民日益增长的美好生活需要和不平衡不充分的发展之间的矛盾 ”。
+            解析 ：不再是“落后社会生产”（我国生产力已巨大发展），重点在于“不平衡不充分”（城乡、区域、收入分配等差距）。
+
+            2. 习近平新时代中国特色社会主义思想
+            核心要义 ：坚持和发展中国特色社会主义。
+            主要内容 ：
+            “十个明确” ：理论层面的核心观点（指导思想）。
+            “十四个坚持” ：实践层面的基本方略（行动纲领）。
+            “十三个方面成就” ：全方位展现新时代的成就。
+            世界观和方法论（“六个必须坚持”） ：
+            必须坚持人民至上（根本立场）。
+            必须坚持自信自立（立足点）。
+            必须坚持守正创新（理论品格）。
+            必须坚持问题导向（源头活水）。
+            必须坚持系统观念（基本工作方法）。
+            必须坚持胸怀天下（格局）。
+
+            3. 关键会议与第三个历史决议
+            十八届三中全会（2013） ：通过《中共中央关于全面 深化改革 若干重大问题的决定》。
+            总目标 ：完善和发展中国特色社会主义制度，推进国家治理体系和治理能力现代化。
+            核心 ：处理好政府和市场的关系，使市场在资源配置中起 决定性作用 和更好发挥政府作用。
+
+            十九大（2017） ：
+            确立习思想历史地位。
+            提出战略安排：2035年基本实现社会主义现代化；本世纪中叶建成富强民主文明和谐美丽的社会主义现代化强国。
+
+            ★ 十九届六中全会与第三个历史决议（2021） ：
+            全称 ： 《中共中央关于党的百年奋斗重大成就和历史经验的决议》 。
+            核心论断 ：确立习近平同志党中央的核心、全党的核心地位，确立习近平新时代中国特色社会主义思想的指导地位（ “两个确立” ）。
+            意义 ：“两个确立”是党的十八大以来最重要的政治成果，对新时代党和国家事业发展、对推进中华民族伟大复兴历史进程具有决定性意义。
+
+            二十大（2022）与中国式现代化 ：
+            中心任务 ：团结带领全国各族人民全面建成社会主义现代化强国、实现第二个百年奋斗目标，以 中国式现代化 全面推进中华民族伟大复兴。
+            中国式现代化特征 ：人口规模巨大的现代化；全体人民共同富裕的现代化；物质文明和精神文明相协调的现代化；人与自然和谐共生的现代化；走和平发展道路的现代化。
+            本质要求 ：坚持中国共产党领导，坚持中国特色社会主义，实现高质量发展，发展全过程人民民主等。
+
+            二十届三中全会（2024） ：
+            主题 ：进一步全面深化改革、推进中国式现代化。
+            重点 ：经济体制改革仍是重点，强调发展 新质生产力 。
+        `;
+
+        // Function to safely extract content based on marker and format it
+        function extractAndFormat(startMarker, endMarker) {
+            let startIndex = rawData.indexOf(startMarker);
+            let endIndex = endMarker ? rawData.indexOf(endMarker, startIndex) : rawData.length;
+
+            if (startIndex === -1) return '';
+
+            let content = rawData.substring(startIndex + startMarker.length, endIndex);
+            
+            // Basic formatting: replace double newlines with paragraphs, single newlines with spaces (then paragraphs)
+            content = content.trim().replace(/\n\n+/g, '@@@P@@@').replace(/\n/g, ' ').replace(/@@@P@@@/g, '</p><p class="mt-2 text-sm text-gray-200">');
+            
+            // Special formatting for bold content (from the original document's ** or simple enumeration markers)
+            content = content.replace(/（/g, '<span class="text-p5-theme font-semibold">（').replace(/）/g, '）</span>');
+            content = content.replace(/：/g, '：<span class="font-semibold text-white">').replace(/\./g, '.</span>');
+            content = content.replace(/★ /g, '<span class="text-p1-theme font-extrabold text-lg">★</span> ');
+
+            return '<p class="text-sm text-gray-200">' + content + '</p>';
+        }
+
+        const timelineData = [
+            // --- P1: 旧民主主义革命时期 (1840—1919) ---
+            { period: "1840—1919", title: "第一阶段：旧民主主义革命时期", feature: "救亡图存，探索国家出路。", theme: "p1-theme", color: "#ef4444", events: [
+                { year: "1840", brief: "鸦片战争与半殖民地半封建社会的形成", contentId: "P1-1" },
+                { year: "1851", brief: "太平天国运动（农民阶级尝试）", contentId: "P1-2-1" },
+                { year: "1860s", brief: "洋务运动（地主阶级自救，中体西用）", contentId: "P1-2-2" },
+                { year: "1898", brief: "戊戌维新运动（资产阶级改良）", contentId: "P1-2-3" },
+                { year: "1911", brief: "辛亥革命（比较完全意义上的民主革命）", contentId: "P1-3" },
+            ]},
+            // --- P2: 新民主主义革命时期 (1919—1949) ---
+            { period: "1919—1949", title: "第二阶段：新民主主义革命时期", feature: "无产阶级领导，马列主义与工人运动结合。", theme: "p2-theme", color: "#22c55e", events: [
+                { year: "1919", brief: "五四运动（新民主主义革命开端）", contentId: "P2-1-1" },
+                { year: "1921", brief: "中国共产党诞生（中共一大）", contentId: "P2-1-2" },
+                { year: "1924", brief: "国民革命时期（国共第一次合作）", contentId: "P2-2" },
+                { year: "1927.8", brief: "八七会议（转折点：土地革命、武装反抗）", contentId: "P2-3-1" },
+                { year: "1927.9", brief: "三湾改编（确立党对军队的绝对领导）", contentId: "P2-3-2" },
+                { year: "1929", brief: "古田会议（思想建党、政治建军）", contentId: "P2-3-3" },
+                { year: "1931", brief: "九一八事变（抗日战争局部开始）", contentId: "P2-4-1" },
+                { year: "1935.1", brief: "遵义会议（生死攸关的转折，政治成熟）", contentId: "P2-3-4" },
+                { year: "1935.12", brief: "瓦窑堡会议（抗日民族统一战线策略）", contentId: "P2-4-2" },
+                { year: "1936.12", brief: "西安事变（时局转换枢纽，统一战线初步）", contentId: "P2-4-3" },
+                { year: "1937.7", brief: "七七事变（全民族抗战开始，正式合作）", contentId: "P2-4-4" },
+                { year: "1938", brief: "《论持久战》与马克思主义中国化命题", contentId: "P2-4-5" },
+                { year: "1941", brief: "延安整风运动（思想解放，实事求是确立）", contentId: "P2-4-6" },
+                { year: "1945.4", brief: "中共七大 & 第一个历史决议", contentId: "P2-4-7" },
+                { year: "1945.8", brief: "重庆谈判（争取和平民主）", contentId: "P2-5-1" },
+                { year: "1949.3", brief: "七届二中全会（重心转移，两个务必）", contentId: "P2-5-2" },
+                { year: "1949.6", brief: "《论人民民主专政》（建国理论基础）", contentId: "P2-5-3" },
+            ]},
+            // --- P3: 社会主义革命和建设时期 (1949—1978) ---
+            { period: "1949—1978", title: "第三阶段：社会主义革命和建设时期", feature: "确立社会主义基本制度，探索中曲折前进。", theme: "p3-theme", color: "#3b82f6", events: [
+                { year: "1949.10", brief: "新中国成立（进入新民主主义社会）", contentId: "P3-1-1" },
+                { year: "1953-1956", brief: "过渡时期总路线（“一化三改”完成）", contentId: "P3-1-2" },
+                { year: "1956.4", brief: "《论十大关系》（探索中国自己的道路）", contentId: "P3-2-1" },
+                { year: "1956.9", brief: "中共八大（主要矛盾分析）", contentId: "P3-2-2" },
+                { year: "1957", brief: "《关于正确处理人民内部矛盾的问题》", contentId: "P3-2-3" },
+                { year: "1958", brief: "曲折发展（大跃进，人民公社化）", contentId: "P3-2-4" },
+                { year: "1966-1976", brief: "“文化大革命”（重大曲折）", contentId: "P3-2-5" },
+            ]},
+            // --- P4: 改革开放和社会主义现代化建设新时期 (1978—2012) ---
+            { period: "1978—2012", title: "第四阶段：改革开放和社会主义现代化建设新时期", feature: "解放思想，实事求是，开创、坚持和发展中国特色社会主义。", theme: "p4-theme", color: "#f97316", events: [
+                { year: "1978.5", brief: "真理标准问题大讨论（思想解放）", contentId: "P4-1-1" },
+                { year: "1978.12", brief: "十一届三中全会（伟大转折，改革开放）", contentId: "P4-1-2" },
+                { year: "1981", brief: "第二个历史决议（拨乱反正完成）", contentId: "P4-1-3" },
+                { year: "1982", brief: "十二大（建设有中国特色的社会主义）", contentId: "P4-2-1" },
+                { year: "1987", brief: "十三大（初级阶段理论，基本路线）", contentId: "P4-2-2" },
+                { year: "1992", brief: "南方谈话（社会主义本质，市场经济目标确立）", contentId: "P4-2-3" },
+                { year: "2000", brief: "“三个代表”重要思想（江泽民）", contentId: "P4-3-1" },
+                { year: "2003", brief: "科学发展观（胡锦涛，以人为本）", contentId: "P4-3-2" },
+            ]},
+            // --- P5: 中国特色社会主义新时代 (2012—至今) ---
+            { period: "2012—至今", title: "第五阶段：中国特色社会主义新时代", feature: "强起来，主要矛盾转化，习近平新时代中国特色社会主义思想。", theme: "p5-theme", color: "#8b5cf6", events: [
+                { year: "2012", brief: "十八大（进入新时代，主要矛盾转化）", contentId: "P5-1" },
+                { year: "2013", brief: "十八届三中全会（全面深化改革，市场决定性作用）", contentId: "P5-3-1" },
+                { year: "2017", brief: "十九大（战略安排，习思想确立）", contentId: "P5-3-2" },
+                { year: "2021", brief: "十九届六中全会 & 第三个历史决议（“两个确立”）", contentId: "P5-3-3" },
+                { year: "2022", brief: "二十大（中国式现代化，中心任务）", contentId: "P5-3-4" },
+                { year: "2024", brief: "二十届三中全会（发展新质生产力）", contentId: "P5-3-5" },
+            ]},
+        ];
+
+        const detailedContent = {
+            // P1
+            "P1-1": { title: "鸦片战争与半殖民地半封建社会的形成 (1840年起)", content: extractAndFormat("1. 鸦片战争与半殖民地半封建社会的形成（1840年起）", "2. 对国家出路的早期探索（三次失败的尝试）") },
+            "P1-2-1": { title: "太平天国运动（1851-1864）", content: extractAndFormat("(1) 农民阶级的尝试：太平天国运动（1851-1864）", "(2) 地主阶级洋务派的自救：洋务运动（19世纪60-90年代）") },
+            "P1-2-2": { title: "洋务运动（19世纪60-90年代）", content: extractAndFormat("(2) 地主阶级洋务派的自救：洋务运动（19世纪60-90年代）", "(3) 资产阶级维新派的改良：戊戌维新运动（1898）") },
+            "P1-2-3": { title: "戊戌维新运动（1898）", content: extractAndFormat("(3) 资产阶级维新派的改良：戊戌维新运动（1898）", "3. 辛亥革命（1911）—— 比较完全意义上的资产阶级民主革命") },
+            "P1-3": { title: "辛亥革命（1911）", content: extractAndFormat("3. 辛亥革命（1911）—— 比较完全意义上的资产阶级民主革命", "第二阶段：新民主主义革命时期（1919—1949）") },
+
+            // P2
+            "P2-1-1": { title: "五四运动（1919）—— 新民主主义革命的开端", content: extractAndFormat("五四运动（1919）—— 分水岭 ：", "中国共产党的诞生（1921） ：") },
+            "P2-1-2": { title: "中国共产党的诞生（1921）与中共二大", content: extractAndFormat("中国共产党的诞生（1921） ：", "2. 国民革命时期（1924-1927）—— 大革命") },
+            "P2-2": { title: "国民革命时期（1924-1927）—— 大革命", content: extractAndFormat("2. 国民革命时期（1924-1927）—— 大革命", "3. 土地革命战争时期（1927-1937）—— 道路的开辟") },
+            "P2-3-1": { title: "八七会议（1927.8.7）", content: extractAndFormat("转折点：八七会议（1927.8.7） ：", "革命道路的探索（农村包围城市、武装夺取政权） ：") },
+            "P2-3-2": { title: "南昌起义、秋收起义与三湾改编（革命道路探索）", content: extractAndFormat("实践探索 ：", "古田会议（1929） ：") },
+            "P2-3-3": { title: "古田会议（1929）", content: extractAndFormat("古田会议（1929） ：", "★ 生死攸关的转折：遵义会议（1935.1） ：") },
+            "P2-3-4": { title: "遵义会议（1935.1）与长征中的光辉篇章", content: extractAndFormat("★ 生死攸关的转折：遵义会议（1935.1） ：", "4. 抗日战争时期（1931-1945）—— 思想成熟与民族复兴枢纽") },
+            "P2-4-1": { title: "九一八事变（1931）", content: extractAndFormat("时局转换与统一战线 ：", "瓦窑堡会议（1935） ：") },
+            "P2-4-2": { title: "瓦窑堡会议（1935）", content: extractAndFormat("瓦窑堡会议（1935） ：", "西安事变（1936） ：") },
+            "P2-4-3": { title: "西安事变（1936）", content: extractAndFormat("西安事变（1936） ：", "七七事变（1937） ：") },
+            "P2-4-4": { title: "七七事变（1937）", content: extractAndFormat("七七事变（1937） ：", "全面抗战路线与持久战 ：") },
+            "P2-4-5": { title: "洛川会议与《论持久战》（1938）", content: extractAndFormat("全面抗战路线与持久战 ：", "抗日民主根据地的建设 ：") },
+            "P2-4-6": { title: "抗日民主根据地建设、毛泽东思想的成熟与延安整风", content: extractAndFormat("抗日民主根据地的建设 ：", "党的七大与第一个历史决议（1945） ：") },
+            "P2-4-7": { title: "党的七大与第一个历史决议（1945）", content: extractAndFormat("党的七大与第一个历史决议（1945） ：", "5. 解放战争时期（1945-1949）") },
+            "P2-5-1": { title: "解放战争时期：重庆谈判（1945）", content: extractAndFormat("两种命运的决战 ：", "两条战线 ：") },
+            "P2-5-2": { title: "解放战争时期：两条战线、政策调整与七届二中全会", content: extractAndFormat("两条战线 ：", "《论人民民主专政》（1949.6） ：") },
+            "P2-5-3": { title: "《论人民民主专政》（1949.6）", content: extractAndFormat("《论人民民主专政》（1949.6） ：", "第三阶段：社会主义革命和建设时期（1949—1978）") },
+
+            // P3
+            "P3-1-1": { title: "新中国成立（1949）", content: extractAndFormat("1. 过渡时期（1949-1956）—— “一化三改”", "过渡时期总路线 ：") },
+            "P3-1-2": { title: "过渡时期总路线与社会主义基本制度确立（1953-1956）", content: extractAndFormat("过渡时期总路线 ：", "2. 社会主义建设的初步探索（1956-1976）") },
+            "P3-2-1": { title: "《论十大关系》（1956.4）", content: extractAndFormat("良好开局与理论创新 ：", "中共八大（1956.9） ：") },
+            "P3-2-2": { title: "中共八大（1956.9）", content: extractAndFormat("中共八大（1956.9） ：", "理论深化：《关于正确处理人民内部矛盾的问题》（1957） ：") },
+            "P3-2-3": { title: "《关于正确处理人民内部矛盾的问题》（1957）", content: extractAndFormat("理论深化：《关于正确处理人民内部矛盾的问题》（1957） ：", "曲折与成就 ：") },
+            "P3-2-4": { title: "社会主义建设的曲折与成就", content: extractAndFormat("曲折与成就 ：", "第四阶段：改革开放和社会主义现代化建设新时期（1978—2012）") },
+            "P3-2-5": { title: "“文化大革命”时期", content: '曲折部分包括：“大跃进”（忽视客观经济规律）、人民公社化运动、“文化大革命”。' }, // Simplified entry for the '曲折' period
+
+            // P4
+            "P4-1-1": { title: "真理标准问题大讨论（1978）", content: extractAndFormat("1. 伟大转折与第二个历史决议", "★ 十一届三中全会（1978.12） ：") },
+            "P4-1-2": { title: "十一届三中全会（1978.12）—— 伟大转折", content: extractAndFormat("★ 十一届三中全会（1978.12） ：", "第二个历史决议（1981） ：") },
+            "P4-1-3": { title: "第二个历史决议（1981）", content: extractAndFormat("第二个历史决议（1981） ：", "2. 邓小平理论 —— 解决“什么是社会主义，怎样建设社会主义”") },
+            "P4-2-1": { title: "十二大（1982）与“建设有中国特色的社会主义”命题", content: extractAndFormat("2. 邓小平理论 —— 解决“什么是社会主义，怎样建设社会主义”", "十三大（1987） ：") },
+            "P4-2-2": { title: "十三大（1987）与社会主义初级阶段理论", content: extractAndFormat("十三大（1987） ：", "南方谈话（1992） ：") },
+            "P4-2-3": { title: "南方谈话（1992）", content: extractAndFormat("南方谈话（1992） ：", "3. “三个代表”重要思想与科学发展观") },
+            "P4-3-1": { title: "“三个代表”重要思想（江泽民）", content: extractAndFormat("3. “三个代表”重要思想与科学发展观", "科学发展观 （胡锦涛）：") },
+            "P4-3-2": { title: "科学发展观（胡锦涛）", content: extractAndFormat("科学发展观 （胡锦涛）：", "第五阶段：中国特色社会主义新时代（2012—至今）") },
+
+            // P5
+            "P5-1": { title: "中国特色社会主义新时代（2012）与主要矛盾转化", content: extractAndFormat("1. 历史方位与主要矛盾的转化", "2. 习近平新时代中国特色社会主义思想") },
+            "P5-3-1": { title: "十八届三中全会（2013）与全面深化改革", content: extractAndFormat("3. 关键会议与第三个历史决议", "十九大（2017） ：") },
+            "P5-3-2": { title: "十九大（2017）", content: extractAndFormat("十九大（2017） ：", "★ 十九届六中全会与第三个历史决议（2021） ：") },
+            "P5-3-3": { title: "十九届六中全会与第三个历史决议（2021）—— “两个确立”", content: extractAndFormat("★ 十九届六中全会与第三个历史决议（2021） ：", "二十大（2022）与中国式现代化 ：") },
+            "P5-3-4": { title: "二十大（2022）与中国式现代化", content: extractAndFormat("二十大（2022）与中国式现代化 ：", "二十届三中全会（2024） ：") },
+            "P5-3-5": { title: "二十届三中全会（2024）", content: extractAndFormat("二十届三中全会（2024） ：", "★ 深度答题方法论：历史逻辑与理论逻辑的统一") },
+            "P5-2": { title: "习近平新时代中国特色社会主义思想", content: extractAndFormat("2. 习近平新时代中国特色社会主义思想", "3. 关键会议与第三个历史决议") } // Insert P5-2 logic, as it's a major theoretical section
+        };
+
+        // --- 2. Rendering Logic ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('timeline-container');
+            let isLeft = true; // For alternating sides
+
+            timelineData.forEach(phase => {
+                // Render the Phase Title and Feature
+                const phaseSection = document.createElement('div');
+                phaseSection.className = `w-full text-center my-8 md:my-16 relative`;
+                phaseSection.innerHTML = `
+                    <div class="inline-block px-6 py-3 rounded-full glass-container border-2 border-${phase.theme} shadow-glass-lg cursor-default">
+                        <h2 class="text-xl md:text-2xl font-bold text-${phase.theme}">${phase.title} (${phase.period})</h2>
+                        <p class="text-sm text-gray-300 italic opacity-80">${phase.feature}</p>
+                    </div>
+                `;
+                container.appendChild(phaseSection);
+
+                // Render Events within the Phase
+                phase.events.forEach(event => {
+                    const item = document.createElement('div');
+                    item.className = `timeline-item cursor-pointer hover:scale-[1.02] transition-transform duration-300`;
+                    item.setAttribute('data-content-id', event.contentId);
+                    item.onclick = (e) => openModal(e, event.contentId);
+
+                    const card = document.createElement('div');
+                    card.className = `glass-container p-4 rounded-xl relative shadow-xl hover:shadow-2xl transition duration-300 border-t-4 border-${phase.theme}`;
+                    card.innerHTML = `
+                        <p class="text-xs font-semibold text-gray-300">${event.year}</p>
+                        <h3 class="text-lg font-bold mt-1 text-white">${event.brief}</h3>
+                        <p class="text-xs mt-2 text-gray-400">点击查看详细内容...</p>
+                    `;
+
+                    const dot = document.createElement('div');
+                    dot.className = `timeline-dot bg-${phase.theme} shadow-lg`;
+
+                    if (isLeft) {
+                        item.appendChild(card);
+                        item.appendChild(dot);
+                    } else {
+                        item.appendChild(dot);
+                        item.appendChild(card);
+                    }
+
+                    container.appendChild(item);
+                    isLeft = !isLeft;
+                });
+            });
+
+            // Add the theoretical methodology section (P5-2 content manually added as a final point)
+            const finalTheoryEvent = { year: "理论总结", brief: "历史逻辑与理论逻辑的统一（深度答题方法论）", contentId: "P5-Theory" };
+            const finalItem = document.createElement('div');
+            finalItem.className = `timeline-item cursor-pointer mt-16 hover:scale-[1.02] transition-transform duration-300`;
+            finalItem.setAttribute('data-content-id', finalTheoryEvent.contentId);
+            finalItem.onclick = (e) => openModal(e, 'P5-Theory');
+
+            const finalCard = document.createElement('div');
+            finalCard.className = `glass-container p-4 rounded-xl relative shadow-xl hover:shadow-2xl transition duration-300 border-t-4 border-p5-theme`;
+            finalCard.innerHTML = `
+                <h3 class="text-lg font-bold mt-1 text-p5-theme">${finalTheoryEvent.brief}</h3>
+                <p class="text-xs mt-2 text-gray-400">点击查看方法论总结...</p>
+            `;
+
+            const finalDot = document.createElement('div');
+            finalDot.className = `timeline-dot bg-p5-theme shadow-lg`;
+
+            if (isLeft) {
+                finalItem.appendChild(finalCard);
+                finalItem.appendChild(finalDot);
+            } else {
+                finalItem.appendChild(finalDot);
+                finalItem.appendChild(finalCard);
+            }
+
+            container.appendChild(finalItem);
+        });
+        
+        // Add the final theoretical content manually to the detailedContent object
+        detailedContent["P5-Theory"] = {
+            title: "★ 深度答题方法论：历史逻辑与理论逻辑的统一",
+            content: extractAndFormat("★ 深度答题方法论：历史逻辑与理论逻辑的统一", null)
+        };
+
+        // --- 3. Modal Functionality ---
+
+        const modal = document.getElementById('detail-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+
+        function openModal(e, contentId) {
+            e.stopPropagation(); // Stop click from propagating up
+            const content = detailedContent[contentId];
+            const p5_2_content = detailedContent["P5-2"]; // Including P5-2 for P5-1 and P5-3-1 events
+
+            if (content) {
+                modalTitle.textContent = content.title;
+
+                // Handle the large P5 section content by combining 1, 2, 3
+                let finalContent = content.content;
+                if (contentId === "P5-1") {
+                    finalContent = content.content + '<h3 class="text-xl font-bold mt-6 mb-2 text-p5-theme border-b">2. 习近平新时代中国特色社会主义思想</h3>' + p5_2_content.content;
+                } else if (contentId === "P5-3-3" || contentId === "P5-3-4" || contentId === "P5-3-5" || contentId === "P5-Theory") {
+                    // Standard display for later P5 events and the final theoretical summary
+                } else if (contentId.startsWith("P5")) {
+                    finalContent = '<h3 class="text-xl font-bold mt-6 mb-2 text-p5-theme border-b">2. 习近平新时代中国特色社会主义思想</h3>' + p5_2_content.content + '<h3 class="text-xl font-bold mt-6 mb-2 text-p5-theme border-b">3. 关键会议与第三个历史决议</h3>' + finalContent;
+                }
+
+                modalBody.innerHTML = finalContent;
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // Prevent scrolling background
+            }
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside (on the overlay)
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
